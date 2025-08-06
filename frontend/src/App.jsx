@@ -168,10 +168,19 @@ function EventView() {
     setParticipants(newParticipants);
     if (event) {
       console.log("Event exists, processing participants...");
+      console.log(
+        "About to enter for loop with participants:",
+        newParticipants
+      );
+      console.log("For loop condition check:", newParticipants.length > 0);
+
       try {
         // Save participants to Supabase
         for (const participant of newParticipants) {
           console.log("Processing participant:", participant);
+          console.log("Participant ID check:", !participant.id);
+          console.log("Participant ID value:", participant.id);
+
           if (!participant.id) {
             console.log("Adding new participant to database:", participant);
             // New participant - add to database
