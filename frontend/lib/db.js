@@ -24,9 +24,9 @@ export async function createEvent(eventData) {
         title,
         description,
         date_type: dateType,
-        start_date: startDate,
-        end_date: endDate,
-        selected_days: selectedDays,
+        start_date: startDate || null,
+        end_date: endDate || null,
+        selected_days: selectedDays || null,
         start_time: startTime,
         end_time: endTime,
         duration,
@@ -173,12 +173,12 @@ export async function getAvailability(eventId) {
       .from("availability")
       .select(
         `
-        *,
-        participants (
-          name,
-          email
-        )
-      `
+          *,
+          participants (
+            name,
+            email
+          )
+        `
       )
       .eq("event_id", eventId)
       .order("date", { ascending: true })

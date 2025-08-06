@@ -9,7 +9,10 @@ console.log("Supabase Key exists:", !!supabaseAnonKey);
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error("Missing Supabase environment variables:");
   console.error("VITE_SUPABASE_URL:", supabaseUrl);
-  console.error("VITE_SUPABASE_ANON_KEY:", supabaseAnonKey ? "exists" : "missing");
+  console.error(
+    "VITE_SUPABASE_ANON_KEY:",
+    supabaseAnonKey ? "exists" : "missing"
+  );
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
