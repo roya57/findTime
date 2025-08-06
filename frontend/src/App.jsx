@@ -143,67 +143,60 @@ function EventView() {
       "EventView handleParticipantsChange called with:",
       newParticipants
     );
-    console.log("Array length:", newParticipants.length);
-    console.log("Array type:", typeof newParticipants);
-    console.log("Is array:", Array.isArray(newParticipants));
-    console.log("JSON stringified:", JSON.stringify(newParticipants, null, 2));
+    console.log("Type of newParticipants:", typeof newParticipants);
+    console.log("Is function:", typeof newParticipants === 'function');
+    
+    // Handle the function updater pattern from React setState
+    if (typeof newParticipants === 'function') {
+      console.log("newParticipants is a function, calling it with current participants");
+      const updatedParticipants = newParticipants(participants);
+      console.log("Updated participants from function:", updatedParticipants);
+      
+      setParticipants(updatedParticipants);
+      
+      if (event) {
+        console.log("Event exists, processing participants...");
+        console.log(
+          "About to enter for loop with participants:",
+          updatedParticipants
+        );
+        console.log("For loop condition check:", updatedParticipants.length > 0);
 
-    // Debug function availability
-    console.log("addParticipant function:", typeof addParticipant);
-    console.log("event object:", event);
-    console.log("event.id:", event?.id);
+        try {
+          // Save participants to Supabase
+          for (const participant of updatedParticipants) {
+            console.log("Processing participant:", participant);
+            console.log("Participant ID check:", !participant.id);
+            console.log("Participant ID value:", participant.id);
 
-    // Test if we can access the database functions
-    console.log("Available functions:", {
-      createEvent: typeof createEvent,
-      getEvent: typeof getEvent,
-      addParticipant: typeof addParticipant,
-      getParticipants: typeof getParticipants,
-      updateAvailability: typeof updateAvailability,
-      getAvailability: typeof getAvailability,
-      subscribeToEvent: typeof subscribeToEvent,
-      unsubscribeFromEvent: typeof unsubscribeFromEvent,
-    });
-
-    setParticipants(newParticipants);
-    if (event) {
-      console.log("Event exists, processing participants...");
-      console.log(
-        "About to enter for loop with participants:",
-        newParticipants
-      );
-      console.log("For loop condition check:", newParticipants.length > 0);
-
-      try {
-        // Save participants to Supabase
-        for (const participant of newParticipants) {
-          console.log("Processing participant:", participant);
-          console.log("Participant ID check:", !participant.id);
-          console.log("Participant ID value:", participant.id);
-
-          if (!participant.id) {
-            console.log("Adding new participant to database:", participant);
-            // New participant - add to database
-            const savedParticipant = await addParticipant(event.id, {
-              name: participant.name,
-              email: participant.email,
-            });
-            console.log("Saved participant:", savedParticipant);
-            participant.id = savedParticipant.id;
-          } else {
-            console.log("Participant already has ID:", participant.id);
+            if (!participant.id) {
+              console.log("Adding new participant to database:", participant);
+              // New participant - add to database
+              const savedParticipant = await addParticipant(event.id, {
+                name: participant.name,
+                email: participant.email,
+              });
+              console.log("Saved participant:", savedParticipant);
+              participant.id = savedParticipant.id;
+            } else {
+              console.log("Participant already has ID:", participant.id);
+            }
           }
+        } catch (error) {
+          console.error("Error saving participants:", error);
+          console.error("Error details:", {
+            message: error.message,
+            stack: error.stack,
+            name: error.name,
+          });
         }
-      } catch (error) {
-        console.error("Error saving participants:", error);
-        console.error("Error details:", {
-          message: error.message,
-          stack: error.stack,
-          name: error.name,
-        });
+      } else {
+        console.log("No event found, skipping database save");
       }
     } else {
-      console.log("No event found, skipping database save");
+      // Handle direct array assignment (fallback)
+      console.log("newParticipants is an array, using directly");
+      setParticipants(newParticipants);
     }
   };
 
