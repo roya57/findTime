@@ -52,6 +52,26 @@ export async function getEvent(eventId) {
       .single();
 
     if (error && error.code !== "PGRST116") throw error; // PGRST116 = no rows returned
+
+    if (data) {
+      // Transform snake_case to camelCase for frontend compatibility
+      return {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        dateType: data.date_type,
+        startDate: data.start_date,
+        endDate: data.end_date,
+        selectedDays: data.selected_days,
+        startTime: data.start_time,
+        endTime: data.end_time,
+        duration: data.duration,
+        shareUrl: data.share_url,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+      };
+    }
+
     return data;
   } catch (error) {
     console.error("Error getting event:", error);
