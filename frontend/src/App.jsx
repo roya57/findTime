@@ -43,10 +43,6 @@ function App() {
 // Create Event Component
 function CreateEvent() {
   const navigate = useNavigate();
-  const [currentView, setCurrentView] = useState("create");
-  const [event, setEvent] = useState(null);
-  const [participants, setParticipants] = useState([]);
-  const [availability, setAvailability] = useState({});
 
   const generateUniqueId = () => {
     return (
@@ -76,127 +72,9 @@ function CreateEvent() {
     }
   };
 
-  const handleScheduleComplete = () => {
-    setCurrentView("details");
-  };
-
-  const handleParticipantsChange = async (newParticipants) => {
-    console.log("handleParticipantsChange called with:", newParticipants);
-    console.log("Array length:", newParticipants.length);
-    console.log("Array type:", typeof newParticipants);
-    console.log("Is array:", Array.isArray(newParticipants));
-    console.log("JSON stringified:", JSON.stringify(newParticipants, null, 2));
-
-    // Debug function availability
-    console.log("addParticipant function:", typeof addParticipant);
-    console.log("event object:", event);
-    console.log("event.id:", event?.id);
-
-    // Test if we can access the database functions
-    console.log("Available functions:", {
-      createEvent: typeof createEvent,
-      getEvent: typeof getEvent,
-      addParticipant: typeof addParticipant,
-      getParticipants: typeof getParticipants,
-      updateAvailability: typeof updateAvailability,
-      getAvailability: typeof getAvailability,
-      subscribeToEvent: typeof subscribeToEvent,
-      unsubscribeFromEvent: typeof unsubscribeFromEvent,
-    });
-
-    setParticipants(newParticipants);
-    if (event) {
-      console.log("Event exists, processing participants...");
-      try {
-        // Save participants to Supabase
-        for (const participant of newParticipants) {
-          console.log("Processing participant:", participant);
-          if (!participant.id) {
-            console.log("Adding new participant to database:", participant);
-            // New participant - add to database
-            const savedParticipant = await addParticipant(event.id, {
-              name: participant.name,
-              email: participant.email,
-            });
-            console.log("Saved participant:", savedParticipant);
-            // Update the participant with the database ID
-            participant.id = savedParticipant.id;
-          } else {
-            console.log("Participant already has ID:", participant.id);
-          }
-        }
-      } catch (error) {
-        console.error("Error saving participants:", error);
-        console.error("Error details:", {
-          message: error.message,
-          stack: error.stack,
-          name: error.name,
-        });
-      }
-    } else {
-      console.log("No event found, skipping database save");
-    }
-  };
-
-  const handleAvailabilityChange = async (newAvailability) => {
-    setAvailability(newAvailability);
-    if (event && participants.length > 0) {
-      try {
-        // Save availability to Supabase
-        for (const [key, isAvailable] of Object.entries(newAvailability)) {
-          const [participantId, date, timeSlot] = key.split("-");
-          const participant = participants.find((p) => p.id == participantId);
-          if (participant) {
-            await updateAvailability(
-              event.id,
-              participant.id,
-              date,
-              timeSlot,
-              isAvailable
-            );
-          }
-        }
-      } catch (error) {
-        console.error("Error saving availability:", error);
-      }
-    }
-  };
-
   return (
     <main className="app-main">
-      {currentView === "create" && (
-        <EventCreator onEventCreated={handleEventCreated} />
-      )}
-
-      {currentView === "schedule" && event && (
-        <div className="schedule-view">
-          <EventDetails event={event} />
-          <ParticipantList
-            participants={participants}
-            setParticipants={handleParticipantsChange}
-          />
-          <AvailabilityGrid
-            event={event}
-            participants={participants}
-            availability={availability}
-            setAvailability={handleAvailabilityChange}
-            onComplete={handleScheduleComplete}
-          />
-        </div>
-      )}
-
-      {currentView === "details" && event && (
-        <div className="details-view">
-          <EventDetails event={event} />
-          <AvailabilityGrid
-            event={event}
-            participants={participants}
-            availability={availability}
-            setAvailability={handleAvailabilityChange}
-            readOnly={true}
-          />
-        </div>
-      )}
+      <EventCreator onEventCreated={handleEventCreated} />
     </main>
   );
 }
