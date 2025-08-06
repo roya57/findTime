@@ -109,7 +109,7 @@ export async function addParticipant(eventId, participantData) {
       .insert({
         event_id: eventId,
         name,
-        email,
+        email: email || null,
       })
       .select()
       .single();

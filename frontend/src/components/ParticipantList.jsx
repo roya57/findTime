@@ -9,13 +9,13 @@ const ParticipantList = ({ participants, setParticipants }) => {
 
   const handleAddParticipant = (e) => {
     e.preventDefault();
-    if (newParticipant.name.trim() && newParticipant.email.trim()) {
+    if (newParticipant.name.trim()) {
       setParticipants((prev) => [
         ...prev,
         {
           id: Date.now(),
           name: newParticipant.name.trim(),
-          email: newParticipant.email.trim(),
+          email: newParticipant.email.trim() || null,
           availability: {},
         },
       ]);
@@ -46,7 +46,7 @@ const ParticipantList = ({ participants, setParticipants }) => {
       <form onSubmit={handleAddParticipant} className="add-participant-form">
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="participantName">Name</label>
+            <label htmlFor="participantName">Name *</label>
             <input
               type="text"
               id="participantName"
@@ -60,15 +60,14 @@ const ParticipantList = ({ participants, setParticipants }) => {
           <div className="form-group">
             <label htmlFor="participantEmail">
               <Mail size={16} />
-              Email
+              Email (optional)
             </label>
             <input
               type="email"
               id="participantEmail"
               value={newParticipant.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
-              placeholder="Enter email"
-              required
+              placeholder="Enter email (optional)"
             />
           </div>
 
@@ -87,7 +86,9 @@ const ParticipantList = ({ participants, setParticipants }) => {
             <div key={participant.id} className="participant-item">
               <div className="participant-info">
                 <span className="participant-name">{participant.name}</span>
-                <span className="participant-email">{participant.email}</span>
+                {participant.email && (
+                  <span className="participant-email">{participant.email}</span>
+                )}
               </div>
               <button
                 onClick={() => handleRemoveParticipant(participant.id)}
