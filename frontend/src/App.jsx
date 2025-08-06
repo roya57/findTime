@@ -72,17 +72,22 @@ function CreateEvent() {
   };
 
   const handleParticipantsChange = async (newParticipants) => {
+    console.log("handleParticipantsChange called with:", newParticipants);
     setParticipants(newParticipants);
     if (event) {
       try {
         // Save participants to Supabase
         for (const participant of newParticipants) {
+          console.log("Processing participant:", participant);
           if (!participant.id) {
+            console.log("Adding new participant to database:", participant);
             // New participant - add to database
             const savedParticipant = await addParticipant(event.id, {
               name: participant.name,
               email: participant.email
             });
+            console.log("Saved participant:", savedParticipant);
+            // Update the participant with the database ID
             participant.id = savedParticipant.id;
           }
         }

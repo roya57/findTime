@@ -13,7 +13,6 @@ const ParticipantList = ({ participants, setParticipants }) => {
       setParticipants((prev) => [
         ...prev,
         {
-          id: Date.now(),
           name: newParticipant.name.trim(),
           email: newParticipant.email.trim() || null,
           availability: {},
