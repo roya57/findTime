@@ -130,7 +130,7 @@ export async function addParticipant(eventId, participantData) {
       name,
       email: email || null,
     };
-    
+
     console.log("Data to insert:", insertData);
     console.log("Supabase client:", supabase);
 
@@ -146,7 +146,7 @@ export async function addParticipant(eventId, participantData) {
       console.error("Supabase error:", error);
       throw error;
     }
-    
+
     console.log("Successfully added participant:", data);
     return data;
   } catch (error) {
@@ -155,7 +155,7 @@ export async function addParticipant(eventId, participantData) {
       message: error.message,
       code: error.code,
       details: error.details,
-      hint: error.hint
+      hint: error.hint,
     });
     throw error;
   }
