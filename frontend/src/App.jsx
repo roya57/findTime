@@ -144,23 +144,28 @@ function EventView() {
       newParticipants
     );
     console.log("Type of newParticipants:", typeof newParticipants);
-    console.log("Is function:", typeof newParticipants === 'function');
-    
+    console.log("Is function:", typeof newParticipants === "function");
+
     // Handle the function updater pattern from React setState
-    if (typeof newParticipants === 'function') {
-      console.log("newParticipants is a function, calling it with current participants");
+    if (typeof newParticipants === "function") {
+      console.log(
+        "newParticipants is a function, calling it with current participants"
+      );
       const updatedParticipants = newParticipants(participants);
       console.log("Updated participants from function:", updatedParticipants);
-      
+
       setParticipants(updatedParticipants);
-      
+
       if (event) {
         console.log("Event exists, processing participants...");
         console.log(
           "About to enter for loop with participants:",
           updatedParticipants
         );
-        console.log("For loop condition check:", updatedParticipants.length > 0);
+        console.log(
+          "For loop condition check:",
+          updatedParticipants.length > 0
+        );
 
         try {
           // Save participants to Supabase

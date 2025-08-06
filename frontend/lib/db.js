@@ -103,21 +103,60 @@ export async function updateEvent(eventId, updates) {
 export async function addParticipant(eventId, participantData) {
   const { name, email } = participantData;
 
+  console.log("addParticipant called with:", { eventId, participantData });
+  console.log("Extracted name:", name);
+  console.log("Extracted email:", email);
+  console.log("Email type:", typeof email);
+  console.log("Email value:", email);
+
   try {
+    // First, verify the event exists
+    console.log("Checking if event exists:", eventId);
+    const { data: eventData, error: eventError } = await supabase
+      .from("events")
+      .select("id")
+      .eq("id", eventId)
+      .single();
+
+    if (eventError) {
+      console.error("Event not found:", eventError);
+      throw new Error(`Event with ID ${eventId} not found`);
+    }
+
+    console.log("Event found:", eventData);
+
+    const insertData = {
+      event_id: eventId,
+      name,
+      email: email || null,
+    };
+    
+    console.log("Data to insert:", insertData);
+    console.log("Supabase client:", supabase);
+
     const { data, error } = await supabase
       .from("participants")
-      .insert({
-        event_id: eventId,
-        name,
-        email: email || null,
-      })
+      .insert(insertData)
       .select()
       .single();
 
-    if (error) throw error;
+    console.log("Supabase response:", { data, error });
+
+    if (error) {
+      console.error("Supabase error:", error);
+      throw error;
+    }
+    
+    console.log("Successfully added participant:", data);
     return data;
   } catch (error) {
     console.error("Error adding participant:", error);
+    console.error("Error details:", {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint
+    });
     throw error;
   }
 }
