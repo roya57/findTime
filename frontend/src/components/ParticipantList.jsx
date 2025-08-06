@@ -10,20 +10,28 @@ const ParticipantList = ({ participants, setParticipants }) => {
   const handleAddParticipant = (e) => {
     e.preventDefault();
     if (newParticipant.name.trim()) {
-      setParticipants((prev) => [
-        ...prev,
-        {
-          name: newParticipant.name.trim(),
-          email: newParticipant.email.trim() || null,
-          availability: {},
-        },
-      ]);
+      const newParticipantData = {
+        name: newParticipant.name.trim(),
+        email: newParticipant.email.trim() || null,
+        availability: {},
+      };
+      console.log("Adding new participant:", newParticipantData);
+      setParticipants((prev) => {
+        const updatedParticipants = [...prev, newParticipantData];
+        console.log("Updated participants array:", updatedParticipants);
+        return updatedParticipants;
+      });
       setNewParticipant({ name: "", email: "" });
     }
   };
 
   const handleRemoveParticipant = (id) => {
-    setParticipants((prev) => prev.filter((p) => p.id !== id));
+    console.log("Removing participant with ID:", id);
+    setParticipants((prev) => {
+      const filteredParticipants = prev.filter((p) => p.id !== id);
+      console.log("Filtered participants:", filteredParticipants);
+      return filteredParticipants;
+    });
   };
 
   const handleInputChange = (field, value) => {

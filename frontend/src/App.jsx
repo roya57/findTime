@@ -11,7 +11,16 @@ import EventCreator from "./components/EventCreator";
 import AvailabilityGrid from "./components/AvailabilityGrid";
 import ParticipantList from "./components/ParticipantList";
 import EventDetails from "./components/EventDetails";
-import { createEvent, getEvent, addParticipant, getParticipants, updateAvailability, getAvailability, subscribeToEvent, unsubscribeFromEvent } from "../lib/db.js";
+import {
+  createEvent,
+  getEvent,
+  addParticipant,
+  getParticipants,
+  updateAvailability,
+  getAvailability,
+  subscribeToEvent,
+  unsubscribeFromEvent,
+} from "../lib/db.js";
 
 // Main App Component
 function App() {
@@ -58,7 +67,7 @@ function CreateEvent() {
 
       // Save to Supabase
       await createEvent(eventWithUrl);
-      
+
       setEvent(eventWithUrl);
       setCurrentView("schedule");
     } catch (error) {
@@ -73,8 +82,14 @@ function CreateEvent() {
 
   const handleParticipantsChange = async (newParticipants) => {
     console.log("handleParticipantsChange called with:", newParticipants);
+    console.log("Array length:", newParticipants.length);
+    console.log("Array type:", typeof newParticipants);
+    console.log("Is array:", Array.isArray(newParticipants));
+    console.log("JSON stringified:", JSON.stringify(newParticipants, null, 2));
+
     setParticipants(newParticipants);
     if (event) {
+      console.log("Event exists, processing participants...");
       try {
         // Save participants to Supabase
         for (const participant of newParticipants) {
@@ -84,16 +99,20 @@ function CreateEvent() {
             // New participant - add to database
             const savedParticipant = await addParticipant(event.id, {
               name: participant.name,
-              email: participant.email
+              email: participant.email,
             });
             console.log("Saved participant:", savedParticipant);
             // Update the participant with the database ID
             participant.id = savedParticipant.id;
+          } else {
+            console.log("Participant already has ID:", participant.id);
           }
         }
       } catch (error) {
         console.error("Error saving participants:", error);
       }
+    } else {
+      console.log("No event found, skipping database save");
     }
   };
 
@@ -103,10 +122,16 @@ function CreateEvent() {
       try {
         // Save availability to Supabase
         for (const [key, isAvailable] of Object.entries(newAvailability)) {
-          const [participantId, date, timeSlot] = key.split('-');
-          const participant = participants.find(p => p.id == participantId);
+          const [participantId, date, timeSlot] = key.split("-");
+          const participant = participants.find((p) => p.id == participantId);
           if (participant) {
-            await updateAvailability(event.id, participant.id, date, timeSlot, isAvailable);
+            await updateAvailability(
+              event.id,
+              participant.id,
+              date,
+              timeSlot,
+              isAvailable
+            );
           }
         }
       } catch (error) {
@@ -170,20 +195,20 @@ function EventView() {
         const savedEvent = await getEvent(eventId);
         if (savedEvent) {
           setEvent(savedEvent);
-          
+
           // Load participants
           const eventParticipants = await getParticipants(eventId);
           setParticipants(eventParticipants);
-          
+
           // Load availability
           const eventAvailability = await getAvailability(eventId);
           const availabilityMap = {};
-          eventAvailability.forEach(item => {
+          eventAvailability.forEach((item) => {
             const key = `${item.participant_id}-${item.date}-${item.time_slot}`;
             availabilityMap[key] = item.is_available;
           });
           setAvailability(availabilityMap);
-          
+
           // Set up real-time subscription
           const sub = subscribeToEvent(eventId, (payload) => {
             console.log("Real-time update:", payload);
@@ -223,7 +248,7 @@ function EventView() {
             // New participant - add to database
             const savedParticipant = await addParticipant(event.id, {
               name: participant.name,
-              email: participant.email
+              email: participant.email,
             });
             participant.id = savedParticipant.id;
           }
@@ -240,10 +265,16 @@ function EventView() {
       try {
         // Save availability to Supabase
         for (const [key, isAvailable] of Object.entries(newAvailability)) {
-          const [participantId, date, timeSlot] = key.split('-');
-          const participant = participants.find(p => p.id == participantId);
+          const [participantId, date, timeSlot] = key.split("-");
+          const participant = participants.find((p) => p.id == participantId);
           if (participant) {
-            await updateAvailability(event.id, participant.id, date, timeSlot, isAvailable);
+            await updateAvailability(
+              event.id,
+              participant.id,
+              date,
+              timeSlot,
+              isAvailable
+            );
           }
         }
       } catch (error) {
@@ -273,7 +304,7 @@ function EventView() {
           <h2>Shared Event</h2>
           <p>This event was shared with you</p>
         </div>
-        
+
         <EventDetails event={event} />
         <ParticipantList
           participants={participants}
