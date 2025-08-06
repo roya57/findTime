@@ -68,8 +68,8 @@ function CreateEvent() {
       // Save to Supabase
       await createEvent(eventWithUrl);
 
-      setEvent(eventWithUrl);
-      setCurrentView("schedule");
+      // Navigate to the unique event URL instead of staying on create page
+      navigate(`/event/${uniqueId}`);
     } catch (error) {
       console.error("Error creating event:", error);
       alert("Failed to create event. Please try again.");
