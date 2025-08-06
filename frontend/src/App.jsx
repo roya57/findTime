@@ -11,26 +11,7 @@ import EventCreator from "./components/EventCreator";
 import AvailabilityGrid from "./components/AvailabilityGrid";
 import ParticipantList from "./components/ParticipantList";
 import EventDetails from "./components/EventDetails";
-
-// Storage functions
-const saveEvent = (event) => {
-  const events = JSON.parse(localStorage.getItem("findTimeEvents") || "{}");
-  events[event.id] = event;
-  localStorage.setItem("findTimeEvents", JSON.stringify(events));
-};
-
-const getEvent = (eventId) => {
-  const events = JSON.parse(localStorage.getItem("findTimeEvents") || "{}");
-  return events[eventId] || null;
-};
-
-const saveEventData = (eventId, data) => {
-  const events = JSON.parse(localStorage.getItem("findTimeEvents") || "{}");
-  if (events[eventId]) {
-    events[eventId] = { ...events[eventId], ...data };
-    localStorage.setItem("findTimeEvents", JSON.stringify(events));
-  }
-};
+import { createEvent, getEvent, addParticipant, getParticipants, updateAvailability, getAvailability, subscribeToEvent, unsubscribeFromEvent } from "../lib/db.js";
 
 // Main App Component
 function App() {
@@ -65,34 +46,67 @@ function CreateEvent() {
     );
   };
 
-  const handleEventCreated = (eventData) => {
-    const uniqueId = generateUniqueId();
-    const eventWithUrl = {
-      ...eventData,
-      id: uniqueId,
-      shareUrl: `${window.location.origin}/event/${uniqueId}`,
-      createdAt: new Date().toISOString(),
-    };
-    setEvent(eventWithUrl);
-    saveEvent(eventWithUrl);
-    setCurrentView("schedule");
+  const handleEventCreated = async (eventData) => {
+    try {
+      const uniqueId = generateUniqueId();
+      const eventWithUrl = {
+        ...eventData,
+        id: uniqueId,
+        shareUrl: `${window.location.origin}/event/${uniqueId}`,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Save to Supabase
+      await createEvent(eventWithUrl);
+      
+      setEvent(eventWithUrl);
+      setCurrentView("schedule");
+    } catch (error) {
+      console.error("Error creating event:", error);
+      alert("Failed to create event. Please try again.");
+    }
   };
 
   const handleScheduleComplete = () => {
     setCurrentView("details");
   };
 
-  const handleParticipantsChange = (newParticipants) => {
+  const handleParticipantsChange = async (newParticipants) => {
     setParticipants(newParticipants);
     if (event) {
-      saveEventData(event.id, { participants: newParticipants });
+      try {
+        // Save participants to Supabase
+        for (const participant of newParticipants) {
+          if (!participant.id) {
+            // New participant - add to database
+            const savedParticipant = await addParticipant(event.id, {
+              name: participant.name,
+              email: participant.email
+            });
+            participant.id = savedParticipant.id;
+          }
+        }
+      } catch (error) {
+        console.error("Error saving participants:", error);
+      }
     }
   };
 
-  const handleAvailabilityChange = (newAvailability) => {
+  const handleAvailabilityChange = async (newAvailability) => {
     setAvailability(newAvailability);
-    if (event) {
-      saveEventData(event.id, { availability: newAvailability });
+    if (event && participants.length > 0) {
+      try {
+        // Save availability to Supabase
+        for (const [key, isAvailable] of Object.entries(newAvailability)) {
+          const [participantId, date, timeSlot] = key.split('-');
+          const participant = participants.find(p => p.id == participantId);
+          if (participant) {
+            await updateAvailability(event.id, participant.id, date, timeSlot, isAvailable);
+          }
+        }
+      } catch (error) {
+        console.error("Error saving availability:", error);
+      }
     }
   };
 
@@ -143,35 +157,93 @@ function EventView() {
   const [participants, setParticipants] = useState([]);
   const [availability, setAvailability] = useState({});
   const [loading, setLoading] = useState(true);
+  const [subscription, setSubscription] = useState(null);
 
   useEffect(() => {
-    const loadEvent = () => {
-      const savedEvent = getEvent(eventId);
-      if (savedEvent) {
-        setEvent(savedEvent);
-        setParticipants(savedEvent.participants || []);
-        setAvailability(savedEvent.availability || {});
-      } else {
-        // Event not found, redirect to create page
+    const loadEvent = async () => {
+      try {
+        const savedEvent = await getEvent(eventId);
+        if (savedEvent) {
+          setEvent(savedEvent);
+          
+          // Load participants
+          const eventParticipants = await getParticipants(eventId);
+          setParticipants(eventParticipants);
+          
+          // Load availability
+          const eventAvailability = await getAvailability(eventId);
+          const availabilityMap = {};
+          eventAvailability.forEach(item => {
+            const key = `${item.participant_id}-${item.date}-${item.time_slot}`;
+            availabilityMap[key] = item.is_available;
+          });
+          setAvailability(availabilityMap);
+          
+          // Set up real-time subscription
+          const sub = subscribeToEvent(eventId, (payload) => {
+            console.log("Real-time update:", payload);
+            // Reload data when changes occur
+            loadEvent();
+          });
+          setSubscription(sub);
+        } else {
+          // Event not found, redirect to create page
+          navigate("/", { replace: true });
+        }
+      } catch (error) {
+        console.error("Error loading event:", error);
         navigate("/", { replace: true });
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     loadEvent();
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (subscription) {
+        unsubscribeFromEvent(subscription);
+      }
+    };
   }, [eventId, navigate]);
 
-  const handleParticipantsChange = (newParticipants) => {
+  const handleParticipantsChange = async (newParticipants) => {
     setParticipants(newParticipants);
     if (event) {
-      saveEventData(event.id, { participants: newParticipants });
+      try {
+        // Save participants to Supabase
+        for (const participant of newParticipants) {
+          if (!participant.id) {
+            // New participant - add to database
+            const savedParticipant = await addParticipant(event.id, {
+              name: participant.name,
+              email: participant.email
+            });
+            participant.id = savedParticipant.id;
+          }
+        }
+      } catch (error) {
+        console.error("Error saving participants:", error);
+      }
     }
   };
 
-  const handleAvailabilityChange = (newAvailability) => {
+  const handleAvailabilityChange = async (newAvailability) => {
     setAvailability(newAvailability);
-    if (event) {
-      saveEventData(event.id, { availability: newAvailability });
+    if (event && participants.length > 0) {
+      try {
+        // Save availability to Supabase
+        for (const [key, isAvailable] of Object.entries(newAvailability)) {
+          const [participantId, date, timeSlot] = key.split('-');
+          const participant = participants.find(p => p.id == participantId);
+          if (participant) {
+            await updateAvailability(event.id, participant.id, date, timeSlot, isAvailable);
+          }
+        }
+      } catch (error) {
+        console.error("Error saving availability:", error);
+      }
     }
   };
 
@@ -196,7 +268,7 @@ function EventView() {
           <h2>Shared Event</h2>
           <p>This event was shared with you</p>
         </div>
-
+        
         <EventDetails event={event} />
         <ParticipantList
           participants={participants}
