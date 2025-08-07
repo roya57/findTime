@@ -71,6 +71,10 @@ const AvailabilityGrid = ({
     }
 
     setDates(dateArray);
+    console.log("Generated dates array:", dateArray);
+    console.log("First date type:", typeof dateArray[0]);
+    console.log("First date value:", dateArray[0]);
+    console.log("First date is Date:", dateArray[0] instanceof Date);
 
     // Generate time slots
     const slots = [];
@@ -104,10 +108,30 @@ const AvailabilityGrid = ({
     console.log("Date type:", typeof date);
     console.log("Date value:", date);
     console.log("Is Date object:", date instanceof Date);
+    console.log("Date constructor:", date.constructor.name);
 
-    // Ensure date is a proper Date object
-    const dateObj = date instanceof Date ? date : new Date(date);
+    // More robust date handling
+    let dateObj;
+    if (date instanceof Date) {
+      dateObj = date;
+    } else if (typeof date === "string") {
+      dateObj = new Date(date);
+    } else if (typeof date === "number") {
+      dateObj = new Date(date);
+    } else {
+      console.error("Invalid date format:", date);
+      return;
+    }
+
+    // Check if the date is valid
+    if (isNaN(dateObj.getTime())) {
+      console.error("Invalid date object:", dateObj);
+      return;
+    }
+
     console.log("Processed date object:", dateObj);
+    console.log("Date object toString:", dateObj.toString());
+    console.log("Date object toISOString:", dateObj.toISOString());
 
     const formattedDate = format(dateObj, "yyyy-MM-dd");
     console.log("Formatted date:", formattedDate);

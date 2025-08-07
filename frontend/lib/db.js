@@ -195,7 +195,7 @@ export async function removeParticipant(participantId) {
 export async function testAvailabilityTable() {
   try {
     console.log("Testing availability table access...");
-    
+
     // Try a simple select to see if the table exists
     const { data, error } = await supabase
       .from("availability")
@@ -203,12 +203,12 @@ export async function testAvailabilityTable() {
       .limit(1);
 
     console.log("Availability table test result:", { data, error });
-    
+
     if (error) {
       console.error("Availability table test failed:", error);
       return false;
     }
-    
+
     console.log("Availability table is accessible");
     return true;
   } catch (error) {
