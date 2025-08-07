@@ -238,27 +238,45 @@ function EventView() {
               "value:",
               isAvailable
             );
-            const [participantId, date, timeSlot] = key.split("-");
-            console.log("Parsed:", { participantId, date, timeSlot });
+            
+            // Fix the key parsing to handle dates with hyphens
+            // Key format: "participantId-date-timeSlot"
+            // Date format: "2025-08-13" (contains hyphens)
+            // TimeSlot format: "09:00"
+            
+            const parts = key.split("-");
+            console.log("Split parts:", parts);
+            
+            if (parts.length >= 4) {
+              const participantId = parts[0];
+              // Reconstruct the date from parts (year-month-day)
+              const date = `${parts[1]}-${parts[2]}-${parts[3]}`;
+              // Reconstruct the time slot from remaining parts
+              const timeSlot = parts.slice(4).join("-");
+              
+              console.log("Parsed correctly:", { participantId, date, timeSlot });
+              
+              const participant = participants.find((p) => p.id == participantId);
+              console.log("Found participant:", participant);
 
-            const participant = participants.find((p) => p.id == participantId);
-            console.log("Found participant:", participant);
-
-            if (participant) {
-              console.log(
-                "Saving availability for participant:",
-                participant.name
-              );
-              await updateAvailability(
-                event.id,
-                participant.id,
-                date,
-                timeSlot,
-                isAvailable
-              );
-              console.log("Successfully saved availability");
+              if (participant) {
+                console.log(
+                  "Saving availability for participant:",
+                  participant.name
+                );
+                await updateAvailability(
+                  event.id,
+                  participant.id,
+                  date,
+                  timeSlot,
+                  isAvailable
+                );
+                console.log("Successfully saved availability");
+              } else {
+                console.log("Participant not found for ID:", participantId);
+              }
             } else {
-              console.log("Participant not found for ID:", participantId);
+              console.error("Invalid key format:", key);
             }
           }
         } catch (error) {
@@ -293,17 +311,29 @@ function EventView() {
       console.log("Saving final availability data...");
       try {
         for (const [key, isAvailable] of Object.entries(availability)) {
-          const [participantId, date, timeSlot] = key.split("-");
-          const participant = participants.find((p) => p.id == participantId);
-          if (participant) {
-            console.log("Final save for:", participant.name, key, isAvailable);
-            await updateAvailability(
-              event.id,
-              participant.id,
-              date,
-              timeSlot,
-              isAvailable
-            );
+          // Fix the key parsing to handle dates with hyphens
+          const parts = key.split("-");
+          
+          if (parts.length >= 4) {
+            const participantId = parts[0];
+            // Reconstruct the date from parts (year-month-day)
+            const date = `${parts[1]}-${parts[2]}-${parts[3]}`;
+            // Reconstruct the time slot from remaining parts
+            const timeSlot = parts.slice(4).join("-");
+            
+            const participant = participants.find((p) => p.id == participantId);
+            if (participant) {
+              console.log("Final save for:", participant.name, key, isAvailable);
+              await updateAvailability(
+                event.id,
+                participant.id,
+                date,
+                timeSlot,
+                isAvailable
+              );
+            }
+          } else {
+            console.error("Invalid key format in final save:", key);
           }
         }
         console.log("All availability saved successfully!");
