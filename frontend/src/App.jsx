@@ -206,54 +206,66 @@ function EventView() {
 
   const handleAvailabilityChange = async (newAvailability) => {
     console.log("handleAvailabilityChange called with:", newAvailability);
-    console.log("Event exists:", !!event);
-    console.log("Participants length:", participants.length);
-
-    setAvailability(newAvailability);
-    if (event && participants.length > 0) {
-      console.log("Saving availability to database...");
-      try {
-        // Save availability to Supabase
-        for (const [key, isAvailable] of Object.entries(newAvailability)) {
-          console.log(
-            "Processing availability key:",
-            key,
-            "value:",
-            isAvailable
-          );
-          const [participantId, date, timeSlot] = key.split("-");
-          console.log("Parsed:", { participantId, date, timeSlot });
-
-          const participant = participants.find((p) => p.id == participantId);
-          console.log("Found participant:", participant);
-
-          if (participant) {
+    console.log("Type of newAvailability:", typeof newAvailability);
+    console.log("Is function:", typeof newAvailability === "function");
+    
+    // Handle the function updater pattern from React setState
+    if (typeof newAvailability === "function") {
+      console.log("newAvailability is a function, calling it with current availability");
+      const updatedAvailability = newAvailability(availability);
+      console.log("Updated availability from function:", updatedAvailability);
+      
+      setAvailability(updatedAvailability);
+      
+      if (event && participants.length > 0) {
+        console.log("Saving availability to database...");
+        try {
+          // Save availability to Supabase
+          for (const [key, isAvailable] of Object.entries(updatedAvailability)) {
             console.log(
-              "Saving availability for participant:",
-              participant.name
-            );
-            await updateAvailability(
-              event.id,
-              participant.id,
-              date,
-              timeSlot,
+              "Processing availability key:",
+              key,
+              "value:",
               isAvailable
             );
-            console.log("Successfully saved availability");
-          } else {
-            console.log("Participant not found for ID:", participantId);
+            const [participantId, date, timeSlot] = key.split("-");
+            console.log("Parsed:", { participantId, date, timeSlot });
+
+            const participant = participants.find((p) => p.id == participantId);
+            console.log("Found participant:", participant);
+
+            if (participant) {
+              console.log(
+                "Saving availability for participant:",
+                participant.name
+              );
+              await updateAvailability(
+                event.id,
+                participant.id,
+                date,
+                timeSlot,
+                isAvailable
+              );
+              console.log("Successfully saved availability");
+            } else {
+              console.log("Participant not found for ID:", participantId);
+            }
           }
+        } catch (error) {
+          console.error("Error saving availability:", error);
+          console.error("Error details:", {
+            message: error.message,
+            stack: error.stack,
+            name: error.name,
+          });
         }
-      } catch (error) {
-        console.error("Error saving availability:", error);
-        console.error("Error details:", {
-          message: error.message,
-          stack: error.stack,
-          name: error.name,
-        });
+      } else {
+        console.log("Skipping availability save - no event or participants");
       }
     } else {
-      console.log("Skipping availability save - no event or participants");
+      // Handle direct object assignment (fallback)
+      console.log("newAvailability is an object, using directly");
+      setAvailability(newAvailability);
     }
   };
 
