@@ -12,4 +12,16 @@ ALTER TABLE participants ALTER COLUMN email DROP NOT NULL;
 -- Verify the change
 SELECT column_name, is_nullable, data_type 
 FROM information_schema.columns 
-WHERE table_name = 'participants' AND column_name = 'email'; 
+WHERE table_name = 'participants' AND column_name = 'email';
+
+-- Migration script to remove share_url column from events table
+-- Run this in your Supabase SQL editor
+
+-- Remove the share_url column from events table
+ALTER TABLE events DROP COLUMN IF EXISTS share_url;
+
+-- Verify the change
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'events' 
+ORDER BY ordinal_position; 

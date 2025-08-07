@@ -205,14 +205,64 @@ function EventView() {
   };
 
   const handleAvailabilityChange = async (newAvailability) => {
+    console.log("handleAvailabilityChange called with:", newAvailability);
+    console.log("Event exists:", !!event);
+    console.log("Participants length:", participants.length);
+    
     setAvailability(newAvailability);
     if (event && participants.length > 0) {
+      console.log("Saving availability to database...");
       try {
         // Save availability to Supabase
         for (const [key, isAvailable] of Object.entries(newAvailability)) {
+          console.log("Processing availability key:", key, "value:", isAvailable);
+          const [participantId, date, timeSlot] = key.split("-");
+          console.log("Parsed:", { participantId, date, timeSlot });
+          
+          const participant = participants.find((p) => p.id == participantId);
+          console.log("Found participant:", participant);
+          
+          if (participant) {
+            console.log("Saving availability for participant:", participant.name);
+            await updateAvailability(
+              event.id,
+              participant.id,
+              date,
+              timeSlot,
+              isAvailable
+            );
+            console.log("Successfully saved availability");
+          } else {
+            console.log("Participant not found for ID:", participantId);
+          }
+        }
+      } catch (error) {
+        console.error("Error saving availability:", error);
+        console.error("Error details:", {
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
+        });
+      }
+    } else {
+      console.log("Skipping availability save - no event or participants");
+    }
+  };
+
+  const handleScheduleComplete = async () => {
+    console.log("handleScheduleComplete called");
+    console.log("Current availability:", availability);
+    console.log("Current participants:", participants);
+    
+    // Ensure all availability is saved
+    if (event && participants.length > 0 && Object.keys(availability).length > 0) {
+      console.log("Saving final availability data...");
+      try {
+        for (const [key, isAvailable] of Object.entries(availability)) {
           const [participantId, date, timeSlot] = key.split("-");
           const participant = participants.find((p) => p.id == participantId);
           if (participant) {
+            console.log("Final save for:", participant.name, key, isAvailable);
             await updateAvailability(
               event.id,
               participant.id,
@@ -222,9 +272,15 @@ function EventView() {
             );
           }
         }
+        console.log("All availability saved successfully!");
+        alert("Scheduling completed successfully!");
       } catch (error) {
-        console.error("Error saving availability:", error);
+        console.error("Error in final availability save:", error);
+        alert("Error saving availability. Please try again.");
       }
+    } else {
+      console.log("No availability to save");
+      alert("No availability data to save.");
     }
   };
 
@@ -260,6 +316,7 @@ function EventView() {
           participants={participants}
           availability={availability}
           setAvailability={handleAvailabilityChange}
+          onComplete={handleScheduleComplete}
           readOnly={false}
         />
       </div>
