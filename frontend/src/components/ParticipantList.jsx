@@ -46,20 +46,23 @@ const ParticipantList = ({ participants, setParticipants }) => {
       <div className="participant-header">
         <h3>
           <Users size={20} />
-          Participants ({participants.length})
+          Add Yourself to This Event
         </h3>
+        <p className="participant-subtitle">
+          Enter your name and optionally your email to join this event
+        </p>
       </div>
 
       <form onSubmit={handleAddParticipant} className="add-participant-form">
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="participantName">Name *</label>
+            <label htmlFor="participantName">Your Name *</label>
             <input
               type="text"
               id="participantName"
               value={newParticipant.name}
               onChange={(e) => handleInputChange("name", e.target.value)}
-              placeholder="Enter name"
+              placeholder="Enter your name"
               required
             />
           </div>
@@ -67,30 +70,31 @@ const ParticipantList = ({ participants, setParticipants }) => {
           <div className="form-group">
             <label htmlFor="participantEmail">
               <Mail size={16} />
-              Email (optional)
+              Your Email (optional)
             </label>
             <input
               type="email"
               id="participantEmail"
               value={newParticipant.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
-              placeholder="Enter email (optional)"
+              placeholder="Enter your email (optional)"
             />
           </div>
 
           <button type="submit" className="add-button">
             <UserPlus size={16} />
-            Add
+            Join Event
           </button>
         </div>
       </form>
 
       <div className="participants">
+        <h4>Current Participants ({participants.length})</h4>
         {participants.length === 0 ? (
-          <p className="no-participants">No participants added yet</p>
+          <p className="no-participants">No participants have joined yet</p>
         ) : (
-          participants.map((participant) => (
-            <div key={participant.id} className="participant-item">
+          participants.map((participant, index) => (
+            <div key={participant.id || index} className="participant-item">
               <div className="participant-info">
                 <span className="participant-name">{participant.name}</span>
                 {participant.email && (
@@ -98,7 +102,7 @@ const ParticipantList = ({ participants, setParticipants }) => {
                 )}
               </div>
               <button
-                onClick={() => handleRemoveParticipant(participant.id)}
+                onClick={() => handleRemoveParticipant(participant.id || index)}
                 className="remove-button"
                 title="Remove participant"
               >

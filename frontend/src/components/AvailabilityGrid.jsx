@@ -158,145 +158,113 @@ const AvailabilityGrid = ({
 
   return (
     <div className="availability-grid">
-      <div className="grid-header">
+      <div className="availability-header">
         <h3>
           <Calendar size={20} />
-          Availability Grid
+          Select Your Availability
         </h3>
-        {!readOnly && (
+        <p className="availability-subtitle">
+          Click on the time slots when you're available to attend
+        </p>
+      </div>
+
+      {participants.length === 0 ? (
+        <div className="no-participants-message">
+          <p>Add yourself as a participant first to select your availability</p>
+        </div>
+      ) : (
+        <>
           <div className="participant-selector">
-            <label>Select participant to mark availability:</label>
+            <label htmlFor="participantSelect">Select yourself:</label>
             <select
+              id="participantSelect"
               value={selectedParticipant || ""}
-              onChange={(e) => setSelectedParticipant(e.target.value || null)}
+              onChange={(e) => setSelectedParticipant(e.target.value)}
+              className="participant-dropdown"
             >
-              <option value="">Choose participant...</option>
-              {participants.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
+              <option value="">Choose your name...</option>
+              {participants.map((participant, index) => (
+                <option
+                  key={participant.id || index}
+                  value={participant.id || index}
+                >
+                  {participant.name}
                 </option>
               ))}
             </select>
           </div>
-        )}
-      </div>
 
-      {!readOnly && selectedParticipant && (
-        <div className="instructions">
-          <p>
-            Click on time slots to mark{" "}
-            {participants.find((p) => p.id == selectedParticipant)?.name}'s
-            availability
-          </p>
-        </div>
-      )}
+          {selectedParticipant && (
+            <div className="grid-container">
+              <div className="time-column">
+                <div className="time-header">Time</div>
+                {timeSlots.map((slot) => (
+                  <div key={slot.start} className="time-slot">
+                    {slot.display}
+                  </div>
+                ))}
+              </div>
 
-      {dates.length === 0 ? (
-        <div className="no-dates-message">
-          <p>
-            No dates available for scheduling. Please check your event
-            configuration.
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="grid-container">
-            <div className="time-column">
-              <div className="time-header">Time</div>
-              {timeSlots.map((slot) => (
-                <div key={slot.start} className="time-slot">
-                  {slot.display}
+              {dates.map((date) => (
+                <div key={date.toISOString()} className="date-column">
+                  <div className="date-header">
+                    <div className="day-name">
+                      {event.dateType === "specific"
+                        ? format(date, "EEE")
+                        : getDayName(date)}
+                    </div>
+                    {event.dateType === "specific" && (
+                      <div className="date-number">{format(date, "MMM d")}</div>
+                    )}
+                  </div>
+
+                  {timeSlots.map((timeSlot) => (
+                    <div
+                      key={`${date.toISOString()}-${timeSlot.start}`}
+                      className={`availability-cell ${
+                        availability[
+                          `${selectedParticipant}-${format(
+                            date,
+                            "yyyy-MM-dd"
+                          )}-${timeSlot.start}`
+                        ]
+                          ? "available"
+                          : "unavailable"
+                      }`}
+                      onClick={() =>
+                        toggleAvailability(selectedParticipant, date, timeSlot)
+                      }
+                    >
+                      {availability[
+                        `${selectedParticipant}-${format(date, "yyyy-MM-dd")}-${
+                          timeSlot.start
+                        }`
+                      ] ? (
+                        <Check size={16} />
+                      ) : (
+                        <X size={16} />
+                      )}
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
+          )}
 
-            {dates.map((date) => (
-              <div key={format(date, "yyyy-MM-dd")} className="date-column">
-                <div
-                  className={`date-header ${
-                    event.dateType === "specific" ? "specific-dates" : ""
-                  }`}
-                >
-                  {event.dateType === "specific" ? (
-                    <>
-                      {format(date, "EEE")}
-                      <br />
-                      <span className="date-number">
-                        {format(date, "MMM d")}
-                      </span>
-                    </>
-                  ) : (
-                    getDayName(date)
-                  )}
-                </div>
-                {timeSlots.map((slot) => {
-                  const key = `${selectedParticipant}-${format(
-                    date,
-                    "yyyy-MM-dd"
-                  )}-${slot.start}`;
-                  const isAvailable = availability[key];
-                  const count = getAvailabilityCount(date, slot);
-                  const isBestTime = bestTimes.some(
-                    (bt) =>
-                      isSameDay(bt.date, date) && bt.slot.start === slot.start
-                  );
-
-                  return (
-                    <div
-                      key={`${format(date, "yyyy-MM-dd")}-${slot.start}`}
-                      className={`grid-cell ${isAvailable ? "available" : ""} ${
-                        isBestTime ? "best-time" : ""
-                      }`}
-                      onClick={() =>
-                        toggleAvailability(selectedParticipant, date, slot)
-                      }
-                    >
-                      {isAvailable && <Check size={16} />}
-                      {count > 0 && <span className="count">{count}</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-
-          {bestTimes.length > 0 && (
-            <div className="best-times">
-              <h4>
-                <Clock size={16} />
-                Best Available Times
-              </h4>
-              <div className="best-times-list">
-                {bestTimes.map((item, index) => (
-                  <div key={index} className="best-time-item">
-                    <span className="date">
-                      {event.dateType === "specific"
-                        ? format(item.date, "EEE, MMM d")
-                        : `${getDayName(item.date)}, ${format(
-                            item.date,
-                            "MMM d"
-                          )}`}
-                    </span>
-                    <span className="time">{item.slot.display}</span>
-                    <span className="participants">
-                      {item.count} participant{item.count > 1 ? "s" : ""}
-                    </span>
+          {selectedParticipant && (
+            <div className="availability-summary">
+              <h4>Best Meeting Times</h4>
+              <div className="best-times">
+                {getBestTimes().map((time, index) => (
+                  <div key={index} className="best-time">
+                    <Clock size={16} />
+                    {time}
                   </div>
                 ))}
               </div>
             </div>
           )}
         </>
-      )}
-
-      {!readOnly && participants.length > 0 && dates.length > 0 && (
-        <button
-          onClick={onComplete}
-          className="complete-button"
-          disabled={Object.keys(availability).length === 0}
-        >
-          Complete Scheduling
-        </button>
       )}
     </div>
   );
