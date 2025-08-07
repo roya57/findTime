@@ -108,13 +108,13 @@ const AvailabilityGrid = ({
     // Ensure date is a proper Date object
     const dateObj = date instanceof Date ? date : new Date(date);
     console.log("Processed date object:", dateObj);
-    
+
     const formattedDate = format(dateObj, "yyyy-MM-dd");
     console.log("Formatted date:", formattedDate);
 
     const key = `${participantId}-${formattedDate}-${timeSlot.start}`;
     console.log("Generated key:", key);
-    
+
     setAvailability((prev) => ({
       ...prev,
       [key]: !prev[key],
@@ -125,7 +125,7 @@ const AvailabilityGrid = ({
     // Ensure date is a proper Date object
     const dateObj = date instanceof Date ? date : new Date(date);
     const formattedDate = format(dateObj, "yyyy-MM-dd");
-    
+
     return participants.filter((participant) => {
       const key = `${participant.id}-${formattedDate}-${timeSlot.start}`;
       return availability[key];
@@ -139,7 +139,7 @@ const AvailabilityGrid = ({
       // Ensure date is a proper Date object
       const dateObj = date instanceof Date ? date : new Date(date);
       const formattedDate = format(dateObj, "yyyy-MM-dd");
-      
+
       timeSlots.forEach((slot) => {
         const count = getAvailabilityCount(date, slot);
         const key = `${formattedDate}-${slot.start}`;

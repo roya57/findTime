@@ -20,6 +20,7 @@ import {
   getAvailability,
   subscribeToEvent,
   unsubscribeFromEvent,
+  testAvailabilityTable,
 } from "../lib/db.js";
 
 // Main App Component
@@ -91,6 +92,11 @@ function EventView() {
   useEffect(() => {
     const loadEvent = async () => {
       try {
+        // Test availability table access first
+        console.log("Testing availability table access...");
+        const tableAccessible = await testAvailabilityTable();
+        console.log("Availability table accessible:", tableAccessible);
+
         const savedEvent = await getEvent(eventId);
         if (savedEvent) {
           setEvent(savedEvent);

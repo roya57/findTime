@@ -191,6 +191,32 @@ export async function removeParticipant(participantId) {
   }
 }
 
+// Test function to check availability table access
+export async function testAvailabilityTable() {
+  try {
+    console.log("Testing availability table access...");
+    
+    // Try a simple select to see if the table exists
+    const { data, error } = await supabase
+      .from("availability")
+      .select("count", { count: "exact", head: true })
+      .limit(1);
+
+    console.log("Availability table test result:", { data, error });
+    
+    if (error) {
+      console.error("Availability table test failed:", error);
+      return false;
+    }
+    
+    console.log("Availability table is accessible");
+    return true;
+  } catch (error) {
+    console.error("Error testing availability table:", error);
+    return false;
+  }
+}
+
 // Availability functions
 export async function updateAvailability(
   eventId,
