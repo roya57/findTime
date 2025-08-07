@@ -208,20 +208,24 @@ function EventView() {
     console.log("handleAvailabilityChange called with:", newAvailability);
     console.log("Type of newAvailability:", typeof newAvailability);
     console.log("Is function:", typeof newAvailability === "function");
-    
+
     // Handle the function updater pattern from React setState
     if (typeof newAvailability === "function") {
-      console.log("newAvailability is a function, calling it with current availability");
+      console.log(
+        "newAvailability is a function, calling it with current availability"
+      );
       const updatedAvailability = newAvailability(availability);
       console.log("Updated availability from function:", updatedAvailability);
-      
+
       setAvailability(updatedAvailability);
-      
+
       if (event && participants.length > 0) {
         console.log("Saving availability to database...");
         try {
           // Save availability to Supabase
-          for (const [key, isAvailable] of Object.entries(updatedAvailability)) {
+          for (const [key, isAvailable] of Object.entries(
+            updatedAvailability
+          )) {
             console.log(
               "Processing availability key:",
               key,

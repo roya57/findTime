@@ -96,9 +96,25 @@ const AvailabilityGrid = ({
   const toggleAvailability = (participantId, date, timeSlot) => {
     if (readOnly) return;
 
-    const key = `${participantId}-${format(date, "yyyy-MM-dd")}-${
-      timeSlot.start
-    }`;
+    console.log("toggleAvailability called with:", {
+      participantId,
+      date,
+      timeSlot,
+    });
+    console.log("Date type:", typeof date);
+    console.log("Date value:", date);
+    console.log("Is Date object:", date instanceof Date);
+
+    // Ensure date is a proper Date object
+    const dateObj = date instanceof Date ? date : new Date(date);
+    console.log("Processed date object:", dateObj);
+    
+    const formattedDate = format(dateObj, "yyyy-MM-dd");
+    console.log("Formatted date:", formattedDate);
+
+    const key = `${participantId}-${formattedDate}-${timeSlot.start}`;
+    console.log("Generated key:", key);
+    
     setAvailability((prev) => ({
       ...prev,
       [key]: !prev[key],
@@ -106,10 +122,12 @@ const AvailabilityGrid = ({
   };
 
   const getAvailabilityCount = (date, timeSlot) => {
+    // Ensure date is a proper Date object
+    const dateObj = date instanceof Date ? date : new Date(date);
+    const formattedDate = format(dateObj, "yyyy-MM-dd");
+    
     return participants.filter((participant) => {
-      const key = `${participant.id}-${format(date, "yyyy-MM-dd")}-${
-        timeSlot.start
-      }`;
+      const key = `${participant.id}-${formattedDate}-${timeSlot.start}`;
       return availability[key];
     }).length;
   };
@@ -118,17 +136,19 @@ const AvailabilityGrid = ({
     const timeCounts = {};
 
     dates.forEach((date) => {
+      // Ensure date is a proper Date object
+      const dateObj = date instanceof Date ? date : new Date(date);
+      const formattedDate = format(dateObj, "yyyy-MM-dd");
+      
       timeSlots.forEach((slot) => {
         const count = getAvailabilityCount(date, slot);
-        const key = `${format(date, "yyyy-MM-dd")}-${slot.start}`;
+        const key = `${formattedDate}-${slot.start}`;
         timeCounts[key] = {
           date,
           slot,
           count,
           participants: participants.filter((participant) => {
-            const availKey = `${participant.id}-${format(date, "yyyy-MM-dd")}-${
-              slot.start
-            }`;
+            const availKey = `${participant.id}-${formattedDate}-${slot.start}`;
             return availability[availKey];
           }),
         };
