@@ -199,28 +199,58 @@ export async function updateAvailability(
   timeSlot,
   isAvailable
 ) {
+  console.log("updateAvailability called with:", {
+    eventId,
+    participantId,
+    date,
+    timeSlot,
+    isAvailable,
+  });
+  console.log("Data types:", {
+    eventId: typeof eventId,
+    participantId: typeof participantId,
+    date: typeof date,
+    timeSlot: typeof timeSlot,
+    isAvailable: typeof isAvailable,
+  });
+
   try {
+    const insertData = {
+      event_id: eventId,
+      participant_id: participantId,
+      date,
+      time_slot: timeSlot,
+      is_available: isAvailable,
+    };
+
+    console.log("Data to upsert:", insertData);
+    console.log("Supabase client:", supabase);
+
     const { data, error } = await supabase
       .from("availability")
-      .upsert(
-        {
-          event_id: eventId,
-          participant_id: participantId,
-          date,
-          time_slot: timeSlot,
-          is_available: isAvailable,
-        },
-        {
-          onConflict: "event_id,participant_id,date,time_slot",
-        }
-      )
+      .upsert(insertData, {
+        onConflict: "event_id,participant_id,date,time_slot",
+      })
       .select()
       .single();
 
-    if (error) throw error;
+    console.log("Supabase response:", { data, error });
+
+    if (error) {
+      console.error("Supabase error in updateAvailability:", error);
+      throw error;
+    }
+
+    console.log("Successfully updated availability:", data);
     return data;
   } catch (error) {
     console.error("Error updating availability:", error);
+    console.error("Error details:", {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
     throw error;
   }
 }

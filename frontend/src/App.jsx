@@ -208,22 +208,30 @@ function EventView() {
     console.log("handleAvailabilityChange called with:", newAvailability);
     console.log("Event exists:", !!event);
     console.log("Participants length:", participants.length);
-    
+
     setAvailability(newAvailability);
     if (event && participants.length > 0) {
       console.log("Saving availability to database...");
       try {
         // Save availability to Supabase
         for (const [key, isAvailable] of Object.entries(newAvailability)) {
-          console.log("Processing availability key:", key, "value:", isAvailable);
+          console.log(
+            "Processing availability key:",
+            key,
+            "value:",
+            isAvailable
+          );
           const [participantId, date, timeSlot] = key.split("-");
           console.log("Parsed:", { participantId, date, timeSlot });
-          
+
           const participant = participants.find((p) => p.id == participantId);
           console.log("Found participant:", participant);
-          
+
           if (participant) {
-            console.log("Saving availability for participant:", participant.name);
+            console.log(
+              "Saving availability for participant:",
+              participant.name
+            );
             await updateAvailability(
               event.id,
               participant.id,
@@ -253,9 +261,13 @@ function EventView() {
     console.log("handleScheduleComplete called");
     console.log("Current availability:", availability);
     console.log("Current participants:", participants);
-    
+
     // Ensure all availability is saved
-    if (event && participants.length > 0 && Object.keys(availability).length > 0) {
+    if (
+      event &&
+      participants.length > 0 &&
+      Object.keys(availability).length > 0
+    ) {
       console.log("Saving final availability data...");
       try {
         for (const [key, isAvailable] of Object.entries(availability)) {
