@@ -54,15 +54,14 @@ function CreateEvent() {
   const handleEventCreated = async (eventData) => {
     try {
       const uniqueId = generateUniqueId();
-      const eventWithUrl = {
+      const eventWithId = {
         ...eventData,
         id: uniqueId,
-        shareUrl: `${window.location.origin}/event/${uniqueId}`,
         createdAt: new Date().toISOString(),
       };
 
       // Save to Supabase
-      await createEvent(eventWithUrl);
+      await createEvent(eventWithId);
 
       // Navigate to the unique event URL instead of staying on create page
       navigate(`/event/${uniqueId}`);

@@ -13,7 +13,6 @@ export async function createEvent(eventData) {
     startTime,
     endTime,
     duration,
-    shareUrl,
   } = eventData;
 
   try {
@@ -30,7 +29,6 @@ export async function createEvent(eventData) {
         start_time: startTime,
         end_time: endTime,
         duration,
-        share_url: shareUrl,
       })
       .select()
       .single();
@@ -55,6 +53,7 @@ export async function getEvent(eventId) {
 
     if (data) {
       // Transform snake_case to camelCase for frontend compatibility
+      // Generate share URL dynamically from event ID
       return {
         id: data.id,
         title: data.title,
@@ -66,7 +65,7 @@ export async function getEvent(eventId) {
         startTime: data.start_time,
         endTime: data.end_time,
         duration: data.duration,
-        shareUrl: data.share_url,
+        shareUrl: `${window.location.origin}/event/${data.id}`,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
       };
