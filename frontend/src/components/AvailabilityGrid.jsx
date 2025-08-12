@@ -146,43 +146,81 @@ const AvailabilityGrid = ({
   };
 
   const getAvailabilityCount = (date, timeSlot) => {
-    // Ensure date is a proper Date object
-    const dateObj = date instanceof Date ? date : new Date(date);
-    const formattedDate = format(dateObj, "yyyy-MM-dd");
+    // For weekly events, we need to count across all weeks
+    if (event.dateType === "weekly") {
+      // This will be handled by the database function now
+      return 0; // Placeholder, will be updated by real-time data
+    }
 
-    return participants.filter((participant) => {
-      const key = `${participant.id}-${formattedDate}-${timeSlot.start}`;
-      return availability[key];
-    }).length;
+    // For specific dates, count as before
+    let count = 0;
+    Object.entries(availability).forEach(([key, isAvailable]) => {
+      if (isAvailable) {
+        const parts = key.split("-");
+        if (parts.length >= 4) {
+          const keyDate = `${parts[1]}-${parts[2]}-${parts[3]}`;
+          const keyTimeSlot = parts.slice(4).join("-");
+          if (
+            keyDate === format(date, "yyyy-MM-dd") &&
+            keyTimeSlot === timeSlot.start
+          ) {
+            count++;
+          }
+        }
+      }
+    });
+    return count;
   };
 
   const getBestTimes = () => {
-    const timeCounts = {};
+    const timeSlotCounts = {};
 
-    dates.forEach((date) => {
-      // Ensure date is a proper Date object
-      const dateObj = date instanceof Date ? date : new Date(date);
-      const formattedDate = format(dateObj, "yyyy-MM-dd");
+    // Count availability for each time slot
+    timeSlots.forEach((timeSlot) => {
+      let totalCount = 0;
 
-      timeSlots.forEach((slot) => {
-        const count = getAvailabilityCount(date, slot);
-        const key = `${formattedDate}-${slot.start}`;
-        timeCounts[key] = {
-          date,
-          slot,
-          count,
-          participants: participants.filter((participant) => {
-            const availKey = `${participant.id}-${formattedDate}-${slot.start}`;
-            return availability[availKey];
-          }),
-        };
-      });
+      if (event.dateType === "weekly") {
+        // For weekly events, count across all selected days
+        dates.forEach((date) => {
+          const dayOfWeek = date.getDay();
+          // Count participants available for this day and time
+          participants.forEach((participant) => {
+            const key = `${participant.id}-${format(date, "yyyy-MM-dd")}-${
+              timeSlot.start
+            }`;
+            if (availability[key]) {
+              totalCount++;
+            }
+          });
+        });
+      } else {
+        // For specific dates, count as before
+        dates.forEach((date) => {
+          const formattedDate = format(date, "yyyy-MM-dd");
+          participants.forEach((participant) => {
+            const key = `${participant.id}-${formattedDate}-${timeSlot.start}`;
+            if (availability[key]) {
+              totalCount++;
+            }
+          });
+        });
+      }
+
+      timeSlotCounts[timeSlot.start] = totalCount;
     });
 
-    return Object.values(timeCounts)
-      .filter((item) => item.count > 0)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
+    // Find the time slot with the most availability
+    let bestTime = null;
+    let maxCount = 0;
+
+    Object.entries(timeSlotCounts).forEach(([time, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        bestTime = time;
+      }
+    });
+
+    return bestTime ? { time: bestTime, count: maxCount } : null;
   };
 
   const getDayName = (date) => {

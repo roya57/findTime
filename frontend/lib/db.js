@@ -223,7 +223,8 @@ export async function updateAvailability(
   participantId,
   date,
   timeSlot,
-  isAvailable
+  isAvailable,
+  eventDateType = null
 ) {
   console.log("updateAvailability called with:", {
     eventId,
@@ -231,6 +232,7 @@ export async function updateAvailability(
     date,
     timeSlot,
     isAvailable,
+    eventDateType,
   });
   console.log("Data types:", {
     eventId: typeof eventId,
@@ -238,16 +240,37 @@ export async function updateAvailability(
     date: typeof date,
     timeSlot: typeof timeSlot,
     isAvailable: typeof isAvailable,
+    eventDateType: typeof eventDateType,
   });
 
   try {
-    const insertData = {
-      event_id: eventId,
-      participant_id: participantId,
-      date,
-      time_slot: timeSlot,
-      is_available: isAvailable,
-    };
+    // Determine if this is a specific date or day of week
+    let insertData;
+
+    if (eventDateType === "weekly") {
+      // For weekly events, extract day of week from the date
+      const dateObj = new Date(date);
+      const dayOfWeek = dateObj.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+
+      insertData = {
+        event_id: eventId,
+        participant_id: participantId,
+        date: null, // No specific date for weekly events
+        day_of_week: dayOfWeek,
+        time_slot: timeSlot,
+        is_available: isAvailable,
+      };
+    } else {
+      // For specific date events, use the date
+      insertData = {
+        event_id: eventId,
+        participant_id: participantId,
+        date: date,
+        day_of_week: null,
+        time_slot: timeSlot,
+        is_available: isAvailable,
+      };
+    }
 
     console.log("Data to upsert:", insertData);
     console.log("Supabase client:", supabase);
@@ -255,7 +278,8 @@ export async function updateAvailability(
     const { data, error } = await supabase
       .from("availability")
       .upsert(insertData, {
-        onConflict: "event_id,participant_id,date,time_slot",
+        onConflict:
+          "availability_event_id_participant_id_date_or_day_time_slot_key",
       })
       .select()
       .single();
@@ -295,7 +319,7 @@ export async function getAvailability(eventId) {
         `
       )
       .eq("event_id", eventId)
-      .order("date", { ascending: true })
+      .order("COALESCE(date, day_of_week)", { ascending: true })
       .order("time_slot", { ascending: true });
 
     if (error) throw error;
@@ -306,15 +330,31 @@ export async function getAvailability(eventId) {
   }
 }
 
-export async function getAvailabilityCount(eventId, date, timeSlot) {
+export async function getAvailabilityCount(
+  eventId,
+  date,
+  timeSlot,
+  eventDateType = null
+) {
   try {
-    const { count, error } = await supabase
+    let query = supabase
       .from("availability")
       .select("*", { count: "exact", head: true })
       .eq("event_id", eventId)
-      .eq("date", date)
       .eq("time_slot", timeSlot)
       .eq("is_available", true);
+
+    if (eventDateType === "weekly") {
+      // For weekly events, match by day of week
+      const dateObj = new Date(date);
+      const dayOfWeek = dateObj.getDay();
+      query = query.eq("day_of_week", dayOfWeek);
+    } else {
+      // For specific date events, match by date
+      query = query.eq("date", date);
+    }
+
+    const { count, error } = await query;
 
     if (error) throw error;
     return count || 0;
