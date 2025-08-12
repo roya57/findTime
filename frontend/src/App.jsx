@@ -64,6 +64,9 @@ function CreateEvent() {
       // Save to Supabase
       await createEvent(eventWithId);
 
+      // Add a small delay to ensure the event is fully committed
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       // Navigate to the unique event URL instead of staying on create page
       navigate(`/event/${uniqueId}`);
     } catch (error) {
