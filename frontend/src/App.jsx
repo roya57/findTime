@@ -238,25 +238,31 @@ function EventView() {
               "value:",
               isAvailable
             );
-            
+
             // Fix the key parsing to handle dates with hyphens
             // Key format: "participantId-date-timeSlot"
             // Date format: "2025-08-13" (contains hyphens)
             // TimeSlot format: "09:00"
-            
+
             const parts = key.split("-");
             console.log("Split parts:", parts);
-            
+
             if (parts.length >= 4) {
               const participantId = parts[0];
               // Reconstruct the date from parts (year-month-day)
               const date = `${parts[1]}-${parts[2]}-${parts[3]}`;
               // Reconstruct the time slot from remaining parts
               const timeSlot = parts.slice(4).join("-");
-              
-              console.log("Parsed correctly:", { participantId, date, timeSlot });
-              
-              const participant = participants.find((p) => p.id == participantId);
+
+              console.log("Parsed correctly:", {
+                participantId,
+                date,
+                timeSlot,
+              });
+
+              const participant = participants.find(
+                (p) => p.id == participantId
+              );
               console.log("Found participant:", participant);
 
               if (participant) {
@@ -313,17 +319,22 @@ function EventView() {
         for (const [key, isAvailable] of Object.entries(availability)) {
           // Fix the key parsing to handle dates with hyphens
           const parts = key.split("-");
-          
+
           if (parts.length >= 4) {
             const participantId = parts[0];
             // Reconstruct the date from parts (year-month-day)
             const date = `${parts[1]}-${parts[2]}-${parts[3]}`;
             // Reconstruct the time slot from remaining parts
             const timeSlot = parts.slice(4).join("-");
-            
+
             const participant = participants.find((p) => p.id == participantId);
             if (participant) {
-              console.log("Final save for:", participant.name, key, isAvailable);
+              console.log(
+                "Final save for:",
+                participant.name,
+                key,
+                isAvailable
+              );
               await updateAvailability(
                 event.id,
                 participant.id,
