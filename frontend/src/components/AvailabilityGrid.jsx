@@ -318,9 +318,7 @@ function AvailabilityGrid({
     <div className="availability-grid">
       <div className="grid-header">
         <div className="time-column-header">Time</div>
-        {dates.map((date, index) => (
-          <div key={index}>{format(date, "EEEE")}</div>
-        ))}
+        {dates.map((date, index) => console.log(date))}
         {/*{dates.map((date, index) => (
           <div key={index} className="date-column-header">
             <div className="day-name">
