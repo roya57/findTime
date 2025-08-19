@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Calendar, Clock, Users, Plus } from "lucide-react";
 
-const EventCreator = ({ onEventCreated }) => {
+const EventCreator = ({ onSubmit }) => {
   const [dateType, setDateType] = useState("specific"); // "specific" or "weekly"
   const [eventData, setEventData] = useState({
     title: "",
@@ -26,7 +26,7 @@ const EventCreator = ({ onEventCreated }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onEventCreated({
+    onSubmit({
       ...eventData,
       dateType,
     });
