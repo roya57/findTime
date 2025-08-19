@@ -107,20 +107,26 @@ function AvailabilityGrid({
         // Filter to only show selected days
         event.selectedDays.forEach((dayValue) => {
           let dayIndex;
-          
+
           // Handle both numeric indices and string day names
-          if (typeof dayValue === 'number') {
+          if (typeof dayValue === "number") {
             dayIndex = dayValue;
-          } else if (typeof dayValue === 'string') {
+          } else if (typeof dayValue === "string") {
             // Convert day name to index (case-insensitive)
             const dayNameLower = dayValue.toLowerCase();
-            dayIndex = dayNames.findIndex(name => name.toLowerCase() === dayNameLower);
+            dayIndex = dayNames.findIndex(
+              (name) => name.toLowerCase() === dayNameLower
+            );
           }
-          
+
           if (dayIndex >= 0 && dayIndex < dayNames.length) {
             dateArray.push(dayNames[dayIndex]); // Store day names, not Date objects
           } else {
-            console.error("Invalid day value:", dayValue, "could not convert to valid day index");
+            console.error(
+              "Invalid day value:",
+              dayValue,
+              "could not convert to valid day index"
+            );
           }
         });
       } else {
@@ -375,7 +381,7 @@ function AvailabilityGrid({
           </div>
         ))}
       </div>
-      {/* <div className="grid-body">
+      <div className="grid-body">
         {timeSlots.map((timeSlot) => (
           <div key={timeSlot} className="time-row">
             <div className="time-slot">{timeSlot}</div>
@@ -409,7 +415,7 @@ function AvailabilityGrid({
             })}
           </div>
         ))}
-      </div> */}
+      </div>
 
       {/* <div className="grid-footer">
         <div className="best-times">
