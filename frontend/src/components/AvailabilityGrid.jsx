@@ -332,7 +332,8 @@ function AvailabilityGrid({
       });
   };
 
-  if (!event || !dates.length || !timeSlots.length) {
+  {
+    /*if (!event || !dates.length || !timeSlots.length) {
     console.log("Grid loading condition check:", {
       hasEvent: !!event,
       eventKeys: event ? Object.keys(event) : [],
@@ -341,6 +342,7 @@ function AvailabilityGrid({
       event: event,
     });
     return <div className="loading">Loading availability grid...</div>;
+  }*/
   }
 
   return (
