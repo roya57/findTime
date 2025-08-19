@@ -86,19 +86,31 @@ function AvailabilityGrid({
         console.log("endDate:", event.endDate);
       }
     } else if (event.dateType === "daysOfWeek" || event.dateType === "weekly") {
-      // For days of week, show next occurrence of each selected day
+      // For days of week, just use the day names - no need for complex date calculations
       if (event.selectedDays && event.selectedDays.length > 0) {
-        console.log("Generating days of week for:", event.selectedDays);
-        const today = new Date();
-        const nextWeek = startOfWeek(today, { weekStartsOn: 1 }); // Monday start
+        console.log(
+          "Using selected days for weekly event:",
+          event.selectedDays
+        );
 
+        // Simple mapping of day indices to day names
+        const dayNames = [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday",
+        ];
+
+        // Filter to only show selected days
         event.selectedDays.forEach((dayIndex) => {
-          const targetDay = addDays(nextWeek, dayIndex);
-          // If the day has passed, move to next week
-          if (targetDay <= today) {
-            targetDay.setDate(targetDay.getDate() + 7);
+          if (dayIndex >= 0 && dayIndex < dayNames.length) {
+            dateArray.push(dayNames[dayIndex]); // Store day names, not Date objects
+          } else {
+            console.error("Invalid day index:", dayIndex);
           }
-          dateArray.push(targetDay);
         });
       } else {
         console.log("No selectedDays for days of week");
@@ -106,7 +118,11 @@ function AvailabilityGrid({
       }
     } else {
       console.error("Unknown dateType:", event.dateType);
-      console.log("Available dateType values:", ["specific", "daysOfWeek"]);
+      console.log("Available dateType values:", [
+        "specific",
+        "daysOfWeek",
+        "weekly",
+      ]);
     }
 
     console.log("Generated dateArray:", dateArray);
@@ -247,25 +263,24 @@ function AvailabilityGrid({
   const getAvailabilityCount = (date, timeSlot) => {
     if (!availability) return 0;
 
-    // Ensure date is a proper Date object
-    let dateObj;
-    if (date instanceof Date) {
-      dateObj = date;
-    } else if (typeof date === "string") {
-      dateObj = new Date(date);
-    } else if (typeof date === "number") {
-      dateObj = new Date(date);
+    // For weekly events, date is a string like "Monday"
+    // For specific dates, date is a Date object
+    let formattedDate;
+
+    if (typeof date === "string") {
+      // Weekly event - use the day name directly
+      formattedDate = date;
+    } else if (date instanceof Date) {
+      // Specific dates - format the Date object
+      if (isNaN(date.getTime())) {
+        console.error("Invalid date object in getAvailabilityCount:", date);
+        return 0;
+      }
+      formattedDate = format(date, "yyyy-MM-dd");
     } else {
       console.error("Invalid date format in getAvailabilityCount:", date);
       return 0;
     }
-
-    if (isNaN(dateObj.getTime())) {
-      console.error("Invalid date object in getAvailabilityCount:", dateObj);
-      return 0;
-    }
-
-    const formattedDate = format(dateObj, "yyyy-MM-dd");
 
     let count = 0;
     Object.values(availability).forEach((participantAvailability) => {
@@ -286,9 +301,23 @@ function AvailabilityGrid({
     const timeSlotCounts = {};
 
     dates.forEach((date) => {
-      const formattedDate = format(date, "yyyy-MM-dd");
+      // For weekly events, date is a string like "Monday"
+      // For specific dates, date is a Date object
+      let dateKey;
+
+      if (typeof date === "string") {
+        // Weekly event - use the day name directly
+        dateKey = date;
+      } else if (date instanceof Date) {
+        // Specific dates - format the Date object
+        dateKey = format(date, "yyyy-MM-dd");
+      } else {
+        console.error("Invalid date format in getBestTimes:", date);
+        return;
+      }
+
       timeSlots.forEach((timeSlot) => {
-        const key = `${formattedDate}-${timeSlot}`;
+        const key = `${dateKey}-${timeSlot}`;
         timeSlotCounts[key] = getAvailabilityCount(date, timeSlot);
       });
     });
@@ -318,19 +347,20 @@ function AvailabilityGrid({
     <div className="availability-grid">
       <div className="grid-header">
         <div className="time-column-header">Time</div>
-        {dates.map((date, index) => console.log(date))}
-        {/*{dates.map((date, index) => (
+        {dates.map((date, index) => (
           <div key={index} className="date-column-header">
             <div className="day-name">
-              {event.dateType === "daysOfWeek"
-                ? format(date, "EEEE")
-                : format(date, "EEE")}
+              {
+                event.dateType === "daysOfWeek" || event.dateType === "weekly"
+                  ? date // For weekly events, date is already a string like "Monday"
+                  : format(date, "EEE") // For specific dates, format the Date object
+              }
             </div>
             {event.dateType === "specific" && (
               <div className="date-small">{format(date, "MMM d")}</div>
             )}
           </div>
-        ))}*/}
+        ))}
       </div>
       {/* <div className="grid-body">
         {timeSlots.map((timeSlot) => (
