@@ -331,8 +331,7 @@ function AvailabilityGrid({
           </div>
         ))}
       </div>
-
-      <div className="grid-body">
+      {/* <div className="grid-body">
         {timeSlots.map((timeSlot) => (
           <div key={timeSlot} className="time-row">
             <div className="time-slot">{timeSlot}</div>
@@ -366,9 +365,9 @@ function AvailabilityGrid({
             })}
           </div>
         ))}
-      </div>
+      </div> */}
 
-      <div className="grid-footer">
+      {/* <div className="grid-footer">
         <div className="best-times">
           <h4>Best Times:</h4>
           <ul>
@@ -380,7 +379,7 @@ function AvailabilityGrid({
             ))}
           </ul>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
