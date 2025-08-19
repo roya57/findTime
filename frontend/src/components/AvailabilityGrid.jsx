@@ -318,7 +318,7 @@ function AvailabilityGrid({
     <div className="availability-grid">
       <div className="grid-header">
         <div className="time-column-header">Time</div>
-        {dates.map((date, index) => (
+        {/*{dates.map((date, index) => (
           <div key={index} className="date-column-header">
             <div className="day-name">
               {event.dateType === "daysOfWeek"
@@ -329,7 +329,7 @@ function AvailabilityGrid({
               <div className="date-small">{format(date, "MMM d")}</div>
             )}
           </div>
-        ))}
+        ))}*/}
       </div>
       {/* <div className="grid-body">
         {timeSlots.map((timeSlot) => (
