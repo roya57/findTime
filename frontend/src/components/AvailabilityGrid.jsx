@@ -342,7 +342,7 @@ function AvailabilityGrid({
           </div>
         ))}
       </div>
-      <div className="grid-body">
+      {/*<div className="grid-body">
         {timeSlots.map((timeSlot) => (
           <div key={timeSlot} className="time-row">
             <div className="time-slot">{timeSlot}</div>
@@ -355,8 +355,16 @@ function AvailabilityGrid({
                   key={`${timeSlot}-${dateIndex}`}
                   className={`availability-cell`}
                   onClick={() => {
-                    console.log(`Clicked: ${timeSlot} on ${typeof date === 'string' ? date : format(date, 'yyyy-MM-dd')}`);
-                    console.log(`Current availability count: ${availabilityCount}`);
+                    console.log(
+                      `Clicked: ${timeSlot} on ${
+                        typeof date === "string"
+                          ? date
+                          : format(date, "yyyy-MM-dd")
+                      }`
+                    );
+                    console.log(
+                      `Current availability count: ${availabilityCount}`
+                    );
                     // TODO: Add participant selection and availability marking
                   }}
                 >
@@ -368,7 +376,7 @@ function AvailabilityGrid({
             })}
           </div>
         ))}
-      </div>
+      </div>*/}
     </div>
   );
 }
