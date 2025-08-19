@@ -105,11 +105,22 @@ function AvailabilityGrid({
         ];
 
         // Filter to only show selected days
-        event.selectedDays.forEach((dayIndex) => {
+        event.selectedDays.forEach((dayValue) => {
+          let dayIndex;
+          
+          // Handle both numeric indices and string day names
+          if (typeof dayValue === 'number') {
+            dayIndex = dayValue;
+          } else if (typeof dayValue === 'string') {
+            // Convert day name to index (case-insensitive)
+            const dayNameLower = dayValue.toLowerCase();
+            dayIndex = dayNames.findIndex(name => name.toLowerCase() === dayNameLower);
+          }
+          
           if (dayIndex >= 0 && dayIndex < dayNames.length) {
             dateArray.push(dayNames[dayIndex]); // Store day names, not Date objects
           } else {
-            console.error("Invalid day index:", dayIndex);
+            console.error("Invalid day value:", dayValue, "could not convert to valid day index");
           }
         });
       } else {
