@@ -385,34 +385,6 @@ function AvailabilityGrid({
         {timeSlots.map((timeSlot) => (
           <div key={timeSlot} className="time-row">
             <div className="time-slot">{timeSlot}</div>
-            {/*dates.map((date, dateIndex) => {
-              const formattedDate = format(date, "yyyy-MM-dd");
-              const availabilityCount = getAvailabilityCount(date, timeSlot);
-              const isBestTime = getBestTimes().some(
-                (bt) => bt.date === formattedDate && bt.time === timeSlot
-              );
-
-              return (
-                <div
-                  key={`${timeSlot}-${dateIndex}`}
-                  className={`availability-cell ${
-                    isBestTime ? "best-time" : ""
-                  }`}
-                  onClick={() => {
-                    // For now, just show the count
-                    // In a real app, you might want to show who's available
-                    console.log(
-                      `Time slot ${timeSlot} on ${formattedDate} has ${availabilityCount} participants available`
-                    );
-                  }}
-                >
-                  <span className="availability-count">
-                    {availabilityCount}
-                  </span>
-                  {isBestTime && <span className="best-time-indicator">★</span>}
-                </div>
-              );
-            })*/}
           </div>
         ))}
       </div>
