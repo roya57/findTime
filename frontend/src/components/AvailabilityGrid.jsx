@@ -385,7 +385,7 @@ function AvailabilityGrid({
         {timeSlots.map((timeSlot) => (
           <div key={timeSlot} className="time-row">
             <div className="time-slot">{timeSlot}</div>
-            {dates.map((date, dateIndex) => {
+            {/*dates.map((date, dateIndex) => {
               const formattedDate = format(date, "yyyy-MM-dd");
               const availabilityCount = getAvailabilityCount(date, timeSlot);
               const isBestTime = getBestTimes().some(
@@ -412,7 +412,7 @@ function AvailabilityGrid({
                   {isBestTime && <span className="best-time-indicator">★</span>}
                 </div>
               );
-            })}
+            })*/}
           </div>
         ))}
       </div>
