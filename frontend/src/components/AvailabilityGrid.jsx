@@ -133,19 +133,60 @@ function AvailabilityGrid({
       event.duration
     );
 
-    const slots = [];
-    const start = new Date(`2000-01-01T${event.startTime}`);
-    const end = new Date(`2000-01-01T${event.endTime}`);
-    const durationMs = event.duration * 60 * 1000;
+    console.log(
+      "startTime type:",
+      typeof event.startTime,
+      "value:",
+      event.startTime
+    );
+    console.log("endTime type:", typeof event.endTime, "value:", event.endTime);
+    console.log(
+      "duration type:",
+      typeof event.duration,
+      "value:",
+      event.duration
+    );
 
-    let current = start;
-    while (current < end) {
-      slots.push(format(current, "HH:mm"));
-      current = new Date(current.getTime() + durationMs);
+    try {
+      const slots = [];
+      const start = new Date(`2000-01-01T${event.startTime}`);
+      const end = new Date(`2000-01-01T${event.endTime}`);
+      const durationMs = event.duration * 60 * 1000;
+
+      console.log(
+        "Parsed start time:",
+        start,
+        "isValid:",
+        !isNaN(start.getTime())
+      );
+      console.log("Parsed end time:", end, "isValid:", !isNaN(end.getTime()));
+      console.log("Duration in ms:", durationMs);
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        console.error("Invalid time format - cannot parse start or end time");
+        return;
+      }
+
+      let current = new Date(start);
+      while (current < end) {
+        const timeString = format(current, "HH:mm");
+        console.log("Adding time slot:", timeString, "from:", current);
+        slots.push(timeString);
+        current = new Date(current.getTime() + durationMs);
+      }
+
+      console.log("Generated timeSlots:", slots);
+      setTimeSlots(slots);
+    } catch (error) {
+      console.error("Error generating time slots:", error);
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        startTime: event.startTime,
+        endTime: event.endTime,
+        duration: event.duration,
+      });
     }
-
-    console.log("Generated timeSlots:", slots);
-    setTimeSlots(slots);
   };
 
   const toggleAvailability = (participantId, date, timeSlot) => {
