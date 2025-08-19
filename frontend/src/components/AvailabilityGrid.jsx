@@ -1,116 +1,85 @@
-import { useState, useEffect } from "react";
-import {
-  format,
-  addDays,
-  parseISO,
-  isSameDay,
-  startOfWeek,
-  addWeeks,
-} from "date-fns";
-import { Calendar, Clock, Check, X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { format, addDays, startOfWeek, getDay } from "date-fns";
 
-const AvailabilityGrid = ({
+function AvailabilityGrid({
   event,
   participants,
   availability,
-  setAvailability,
-  onComplete,
-  readOnly = false,
-}) => {
-  const [selectedParticipant, setSelectedParticipant] = useState(null);
-  const [timeSlots, setTimeSlots] = useState([]);
+  onAvailabilityChange,
+}) {
   const [dates, setDates] = useState([]);
+  const [timeSlots, setTimeSlots] = useState([]);
 
-  // Generate time slots and dates when event changes
   useEffect(() => {
-    if (!event) return;
+    if (event) {
+      generateDates();
+      generateTimeSlots();
+    }
+  }, [event]);
 
-    // Generate dates based on date type
+  const generateDates = () => {
     let dateArray = [];
 
     if (event.dateType === "specific") {
-      // Generate dates between start and end date
-      const startDate = parseISO(event.startDate);
-      const endDate = parseISO(event.endDate);
+      // For specific dates, generate dates between start and end
+      if (event.startDate && event.endDate) {
+        const start = new Date(event.startDate);
+        const end = new Date(event.endDate);
+        let current = start;
 
-      let currentDate = startDate;
-      while (currentDate <= endDate) {
-        dateArray.push(currentDate);
-        currentDate = addDays(currentDate, 1);
-      }
-    } else if (event.dateType === "weekly" && event.selectedDays) {
-      // Generate one date for each selected day of the week (next occurrence)
-      const today = new Date();
-      const startOfThisWeek = startOfWeek(today, { weekStartsOn: 1 }); // Monday start
-
-      const dayToNumber = {
-        monday: 1,
-        tuesday: 2,
-        wednesday: 3,
-        thursday: 4,
-        friday: 5,
-        saturday: 6,
-        sunday: 0,
-      };
-
-      // Find the next occurrence of each selected day
-      event.selectedDays.forEach((day) => {
-        const dayNumber = dayToNumber[day];
-        if (dayNumber !== undefined) {
-          // Start from this week
-          let date = addDays(startOfThisWeek, dayNumber);
-
-          // If the day has already passed this week, move to next week
-          if (date < today) {
-            date = addDays(date, 7);
-          }
-
-          dateArray.push(date);
+        while (current <= end) {
+          dateArray.push(new Date(current));
+          current = addDays(current, 1);
         }
-      });
-    }
+      }
+    } else if (event.dateType === "daysOfWeek") {
+      // For days of week, show next occurrence of each selected day
+      if (event.selectedDays && event.selectedDays.length > 0) {
+        const today = new Date();
+        const nextWeek = startOfWeek(today, { weekStartsOn: 1 }); // Monday start
 
-    setDates(dateArray);
-    console.log("Generated dates array:", dateArray);
-    console.log("First date type:", typeof dateArray[0]);
-    console.log("First date value:", dateArray[0]);
-    console.log("First date is Date:", dateArray[0] instanceof Date);
-
-    // Generate time slots
-    const slots = [];
-    const startTime = new Date(`2000-01-01T${event.startTime}`);
-    const endTime = new Date(`2000-01-01T${event.endTime}`);
-    const duration = event.duration;
-
-    let currentTime = startTime;
-    while (currentTime < endTime) {
-      const slotEnd = new Date(currentTime.getTime() + duration * 60000);
-      if (slotEnd <= endTime) {
-        slots.push({
-          start: format(currentTime, "HH:mm"),
-          end: format(slotEnd, "HH:mm"),
-          display: format(currentTime, "h:mm a"),
+        event.selectedDays.forEach((dayIndex) => {
+          const targetDay = addDays(nextWeek, dayIndex);
+          // If the day has passed, move to next week
+          if (targetDay <= today) {
+            targetDay.setDate(targetDay.getDate() + 7);
+          }
+          dateArray.push(targetDay);
         });
       }
-      currentTime = slotEnd;
     }
+
+    console.log("Generated dateArray:", dateArray);
+    setDates(dateArray);
+  };
+
+  const generateTimeSlots = () => {
+    if (!event.startTime || !event.endTime || !event.duration) return;
+
+    const slots = [];
+    const start = new Date(`2000-01-01T${event.startTime}`);
+    const end = new Date(`2000-01-01T${event.endTime}`);
+    const durationMs = event.duration * 60 * 1000;
+
+    let current = start;
+    while (current < end) {
+      slots.push(format(current, "HH:mm"));
+      current = new Date(current.getTime() + durationMs);
+    }
+
     setTimeSlots(slots);
-  }, [event]);
+  };
 
   const toggleAvailability = (participantId, date, timeSlot) => {
-    if (readOnly) return;
+    if (!participantId) return;
 
-    console.log("toggleAvailability called with:", {
+    console.log("Toggling availability for:", {
       participantId,
       date,
       timeSlot,
     });
-    console.log("Date type:", typeof date);
-    console.log("Date value:", date);
-    console.log("Is Date object:", date instanceof Date);
-    console.log("Date constructor:", date.constructor.name);
 
-    // More robust date handling
+    // Ensure date is a proper Date object
     let dateObj;
     if (date instanceof Date) {
       dateObj = date;
@@ -123,223 +92,171 @@ const AvailabilityGrid = ({
       return;
     }
 
-    // Check if the date is valid
     if (isNaN(dateObj.getTime())) {
       console.error("Invalid date object:", dateObj);
       return;
     }
 
-    console.log("Processed date object:", dateObj);
-    console.log("Date object toString:", dateObj.toString());
-    console.log("Date object toISOString:", dateObj.toISOString());
+    console.log("Date object:", dateObj.toString());
+    console.log("Date ISO:", dateObj.toISOString());
 
     const formattedDate = format(dateObj, "yyyy-MM-dd");
     console.log("Formatted date:", formattedDate);
 
-    const key = `${participantId}-${formattedDate}-${timeSlot.start}`;
-    console.log("Generated key:", key);
+    // Create new availability object
+    const newAvailability = { ...availability };
 
-    setAvailability((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+    // Initialize nested structure if it doesn't exist
+    if (!newAvailability[participantId]) {
+      newAvailability[participantId] = {};
+    }
+    if (!newAvailability[participantId][formattedDate]) {
+      newAvailability[participantId][formattedDate] = {};
+    }
+
+    // Toggle the availability
+    const currentValue =
+      newAvailability[participantId][formattedDate][timeSlot] || false;
+    newAvailability[participantId][formattedDate][timeSlot] = !currentValue;
+
+    console.log("New availability object:", newAvailability);
+
+    // Update parent component
+    onAvailabilityChange(newAvailability);
   };
 
   const getAvailabilityCount = (date, timeSlot) => {
+    if (!availability) return 0;
+
     // Ensure date is a proper Date object
-    const dateObj = date instanceof Date ? date : new Date(date);
+    let dateObj;
+    if (date instanceof Date) {
+      dateObj = date;
+    } else if (typeof date === "string") {
+      dateObj = new Date(date);
+    } else if (typeof date === "number") {
+      dateObj = new Date(date);
+    } else {
+      console.error("Invalid date format in getAvailabilityCount:", date);
+      return 0;
+    }
+
+    if (isNaN(dateObj.getTime())) {
+      console.error("Invalid date object in getAvailabilityCount:", dateObj);
+      return 0;
+    }
+
     const formattedDate = format(dateObj, "yyyy-MM-dd");
 
-    return participants.filter((participant) => {
-      const key = `${participant.id}-${formattedDate}-${timeSlot.start}`;
-      return availability[key];
-    }).length;
+    let count = 0;
+    Object.values(availability).forEach((participantAvailability) => {
+      if (
+        participantAvailability[formattedDate] &&
+        participantAvailability[formattedDate][timeSlot]
+      ) {
+        count++;
+      }
+    });
+
+    return count;
   };
 
   const getBestTimes = () => {
-    const timeCounts = {};
+    if (!availability || !dates.length || !timeSlots.length) return [];
+
+    const timeSlotCounts = {};
 
     dates.forEach((date) => {
-      // Ensure date is a proper Date object
-      const dateObj = date instanceof Date ? date : new Date(date);
-      const formattedDate = format(dateObj, "yyyy-MM-dd");
-
-      timeSlots.forEach((slot) => {
-        const count = getAvailabilityCount(date, slot);
-        const key = `${formattedDate}-${slot.start}`;
-        timeCounts[key] = {
-          date,
-          slot,
-          count,
-          participants: participants.filter((participant) => {
-            const availKey = `${participant.id}-${formattedDate}-${slot.start}`;
-            return availability[availKey];
-          }),
-        };
+      const formattedDate = format(date, "yyyy-MM-dd");
+      timeSlots.forEach((timeSlot) => {
+        const key = `${formattedDate}-${timeSlot}`;
+        timeSlotCounts[key] = getAvailabilityCount(date, timeSlot);
       });
     });
 
-    return Object.values(timeCounts)
-      .filter((item) => item.count > 0)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
+    // Sort by count (descending) and return top 3
+    return Object.entries(timeSlotCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([key, count]) => {
+        const [date, time] = key.split("-");
+        return { date, time, count };
+      });
   };
 
-  const getDayName = (date) => {
-    const dayMap = {
-      0: "Sunday",
-      1: "Monday",
-      2: "Tuesday",
-      3: "Wednesday",
-      4: "Thursday",
-      5: "Friday",
-      6: "Saturday",
-    };
-    return dayMap[date.getDay()];
-  };
-
-  const bestTimes = getBestTimes();
+  if (!event || !dates.length || !timeSlots.length) {
+    return <div className="loading">Loading availability grid...</div>;
+  }
 
   return (
     <div className="availability-grid">
       <div className="grid-header">
-        <h3>
-          <Calendar size={20} />
-          Availability Grid
-        </h3>
-        {!readOnly && (
-          <div className="participant-selector">
-            <label>Select yourself to mark availability:</label>
-            <select
-              value={selectedParticipant || ""}
-              onChange={(e) => setSelectedParticipant(e.target.value || null)}
-            >
-              <option value="">Choose your name...</option>
-              {participants.map((p, index) => (
-                <option key={p.id || index} value={p.id || index}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+        <div className="time-column-header">Time</div>
+        {dates.map((date, index) => (
+          <div key={index} className="date-column-header">
+            <div className="day-name">
+              {event.dateType === "daysOfWeek"
+                ? format(date, "EEEE")
+                : format(date, "EEE")}
+            </div>
+            {event.dateType === "specific" && (
+              <div className="date-small">{format(date, "MMM d")}</div>
+            )}
           </div>
-        )}
+        ))}
       </div>
 
-      {!readOnly && selectedParticipant && (
-        <div className="instructions">
-          <p>Click on time slots to mark your availability</p>
-        </div>
-      )}
+      <div className="grid-body">
+        {timeSlots.map((timeSlot) => (
+          <div key={timeSlot} className="time-row">
+            <div className="time-slot">{timeSlot}</div>
+            {dates.map((date, dateIndex) => {
+              const formattedDate = format(date, "yyyy-MM-dd");
+              const availabilityCount = getAvailabilityCount(date, timeSlot);
+              const isBestTime = getBestTimes().some(
+                (bt) => bt.date === formattedDate && bt.time === timeSlot
+              );
 
-      {dates.length === 0 ? (
-        <div className="no-dates-message">
-          <p>
-            No dates available for scheduling. Please check your event
-            configuration.
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="grid-container">
-            <div className="time-column">
-              <div className="time-header">Time</div>
-              {timeSlots.map((slot) => (
-                <div key={slot.start} className="time-slot">
-                  {slot.display}
-                </div>
-              ))}
-            </div>
-
-            {dates.map((date) => (
-              <div key={format(date, "yyyy-MM-dd")} className="date-column">
+              return (
                 <div
-                  className={`date-header ${
-                    event.dateType === "specific" ? "specific-dates" : ""
+                  key={`${timeSlot}-${dateIndex}`}
+                  className={`availability-cell ${
+                    isBestTime ? "best-time" : ""
                   }`}
+                  onClick={() => {
+                    // For now, just show the count
+                    // In a real app, you might want to show who's available
+                    console.log(
+                      `Time slot ${timeSlot} on ${formattedDate} has ${availabilityCount} participants available`
+                    );
+                  }}
                 >
-                  {event.dateType === "specific" ? (
-                    <>
-                      {format(date, "EEE")}
-                      <br />
-                      <span className="date-number">
-                        {format(date, "MMM d")}
-                      </span>
-                    </>
-                  ) : (
-                    getDayName(date)
-                  )}
+                  <span className="availability-count">
+                    {availabilityCount}
+                  </span>
+                  {isBestTime && <span className="best-time-indicator">★</span>}
                 </div>
-                {timeSlots.map((slot) => {
-                  const key = `${selectedParticipant}-${format(
-                    date,
-                    "yyyy-MM-dd"
-                  )}-${slot.start}`;
-                  const isAvailable = availability[key];
-                  const count = getAvailabilityCount(date, slot);
-                  const isBestTime = bestTimes.some(
-                    (bt) =>
-                      isSameDay(bt.date, date) && bt.slot.start === slot.start
-                  );
-
-                  return (
-                    <div
-                      key={`${format(date, "yyyy-MM-dd")}-${slot.start}`}
-                      className={`grid-cell ${isAvailable ? "available" : ""} ${
-                        isBestTime ? "best-time" : ""
-                      }`}
-                      onClick={() =>
-                        toggleAvailability(selectedParticipant, date, slot)
-                      }
-                    >
-                      {isAvailable && <Check size={16} />}
-                      {count > 0 && <span className="count">{count}</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+              );
+            })}
           </div>
+        ))}
+      </div>
 
-          {bestTimes.length > 0 && (
-            <div className="best-times">
-              <h4>
-                <Clock size={16} />
-                Best Available Times
-              </h4>
-              <div className="best-times-list">
-                {bestTimes.map((item, index) => (
-                  <div key={index} className="best-time-item">
-                    <span className="date">
-                      {event.dateType === "specific"
-                        ? format(item.date, "EEE, MMM d")
-                        : `${getDayName(item.date)}, ${format(
-                            item.date,
-                            "MMM d"
-                          )}`}
-                    </span>
-                    <span className="time">{item.slot.display}</span>
-                    <span className="participants">
-                      {item.count} participant{item.count > 1 ? "s" : ""}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {!readOnly && participants.length > 0 && dates.length > 0 && (
-        <button
-          onClick={onComplete}
-          className="complete-button"
-          disabled={Object.keys(availability).length === 0}
-        >
-          Complete Scheduling
-        </button>
-      )}
+      <div className="grid-footer">
+        <div className="best-times">
+          <h4>Best Times:</h4>
+          <ul>
+            {getBestTimes().map((bestTime, index) => (
+              <li key={index}>
+                {format(new Date(bestTime.date), "MMM d")} at {bestTime.time}(
+                {bestTime.count} participants available)
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </div>
   );
-};
+}
 
 export default AvailabilityGrid;

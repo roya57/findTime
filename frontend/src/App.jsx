@@ -1,12 +1,10 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   useParams,
-  useNavigate,
 } from "react-router-dom";
-import "./App.css";
 import EventCreator from "./components/EventCreator";
 import AvailabilityGrid from "./components/AvailabilityGrid";
 import ParticipantList from "./components/ParticipantList";
@@ -15,23 +13,16 @@ import {
   createEvent,
   getEvent,
   addParticipant,
-  getParticipants,
-  updateAvailability,
-  getAvailability,
-  subscribeToEvent,
-  unsubscribeFromEvent,
-  testAvailabilityTable,
-} from "../lib/db.js";
+  updateAvailabilityBulk,
+} from "./lib/db.js";
+import { supabase } from "./lib/supabase.js";
+import "./App.css";
 
-// Main App Component
+// Main App component with routing
 function App() {
   return (
     <Router>
-      <div className="app">
-        <header className="app-header">
-          <h1>FindTime</h1>
-          <p>Schedule time that works for everyone</p>
-        </header>
+      <div className="App">
         <Routes>
           <Route path="/" element={<CreateEvent />} />
           <Route path="/event/:eventId" element={<EventView />} />
@@ -41,361 +32,206 @@ function App() {
   );
 }
 
-// Create Event Component
+// Create Event Page
 function CreateEvent() {
-  const navigate = useNavigate();
+  const [currentView, setCurrentView] = useState("event");
+  const [event, setEvent] = useState({
+    title: "",
+    description: "",
+    dateType: "specific",
+    startDate: "",
+    endDate: "",
+    selectedDays: [],
+    startTime: "09:00",
+    endTime: "17:00",
+    duration: 60,
+  });
 
-  const generateUniqueId = () => {
-    return (
-      Math.random().toString(36).substring(2, 15) +
-      Math.random().toString(36).substring(2, 15)
-    );
-  };
-
-  const handleEventCreated = async (eventData) => {
+  const handleEventSubmit = async (eventData) => {
     try {
-      const uniqueId = generateUniqueId();
+      console.log("Creating event with data:", eventData);
+
+      // Generate unique ID
+      const eventId =
+        Math.random().toString(36).substring(2, 15) +
+        Math.random().toString(36).substring(2, 15);
+
+      // Prepare event data for database
       const eventWithId = {
-        ...eventData,
-        id: uniqueId,
-        createdAt: new Date().toISOString(),
+        id: eventId,
+        title: eventData.title,
+        description: eventData.description,
+        date_type: eventData.dateType,
+        start_date: eventData.startDate || null,
+        end_date: eventData.endDate || null,
+        selected_days: eventData.selectedDays || null,
+        start_time: eventData.startTime,
+        end_time: eventData.endTime,
+        duration: eventData.duration,
+        participants: [],
+        availability_data: {},
       };
+
+      console.log("Event data to save:", eventWithId);
 
       // Save to Supabase
       await createEvent(eventWithId);
 
       // Navigate to the unique event URL instead of staying on create page
-      navigate(`/event/${uniqueId}`);
+      window.location.href = `/event/${eventId}`;
     } catch (error) {
-      console.error("Error creating event:", error);
-      alert("Failed to create event. Please try again.");
+      console.error("Failed to create event:", error);
+      alert("Failed to create event: " + error.message);
     }
   };
 
   return (
-    <main className="app-main">
-      <EventCreator onEventCreated={handleEventCreated} />
-    </main>
+    <div className="create-event-page">
+      <h1>Create New Event</h1>
+      <EventCreator onSubmit={handleEventSubmit} />
+    </div>
   );
 }
 
-// Event View Component (for shared URLs)
+// Event View Page
 function EventView() {
   const { eventId } = useParams();
-  const navigate = useNavigate();
   const [event, setEvent] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [availability, setAvailability] = useState({});
   const [loading, setLoading] = useState(true);
-  const [subscription, setSubscription] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const loadEvent = async () => {
-      try {
-        // Test availability table access first
-        console.log("Testing availability table access...");
-        const tableAccessible = await testAvailabilityTable();
-        console.log("Availability table accessible:", tableAccessible);
+    loadEventData();
+  }, [eventId]);
 
-        const savedEvent = await getEvent(eventId);
-        if (savedEvent) {
-          setEvent(savedEvent);
+  const loadEventData = async () => {
+    try {
+      setLoading(true);
+      console.log("Loading event data for:", eventId);
 
-          // Load participants
-          const eventParticipants = await getParticipants(eventId);
-          setParticipants(eventParticipants);
+      // Load event data
+      const eventData = await getEvent(eventId);
+      setEvent(eventData);
 
-          // Load availability
-          const eventAvailability = await getAvailability(eventId);
-          const availabilityMap = {};
-          eventAvailability.forEach((item) => {
-            const key = `${item.participant_id}-${item.date}-${item.time_slot}`;
-            availabilityMap[key] = item.is_available;
-          });
-          setAvailability(availabilityMap);
+      // Set participants and availability from JSON data
+      setParticipants(eventData.participants || []);
+      setAvailability(eventData.availabilityData || {});
 
-          // Set up real-time subscription
-          const sub = subscribeToEvent(eventId, (payload) => {
-            console.log("Real-time update:", payload);
-            // Reload data when changes occur
-            loadEvent();
-          });
-          setSubscription(sub);
-        } else {
-          // Event not found, redirect to create page
-          navigate("/", { replace: true });
-        }
-      } catch (error) {
-        console.error("Error loading event:", error);
-        navigate("/", { replace: true });
-      } finally {
-        setLoading(false);
-      }
-    };
+      console.log("Event data loaded:", eventData);
+      console.log("Participants:", eventData.participants);
+      console.log("Availability:", eventData.availabilityData);
 
-    loadEvent();
-
-    // Cleanup subscription on unmount
-    return () => {
-      if (subscription) {
-        unsubscribeFromEvent(subscription);
-      }
-    };
-  }, [eventId, navigate]);
+      setLoading(false);
+    } catch (error) {
+      console.error("Failed to load event data:", error);
+      setError(error.message);
+      setLoading(false);
+    }
+  };
 
   const handleParticipantsChange = async (newParticipants) => {
-    console.log(
-      "EventView handleParticipantsChange called with:",
-      newParticipants
-    );
-    console.log("Type of newParticipants:", typeof newParticipants);
-    console.log("Is function:", typeof newParticipants === "function");
+    try {
+      console.log("handleParticipantsChange called with:", newParticipants);
 
-    // Handle the function updater pattern from React setState
-    if (typeof newParticipants === "function") {
-      console.log(
-        "newParticipants is a function, calling it with current participants"
-      );
-      const updatedParticipants = newParticipants(participants);
-      console.log("Updated participants from function:", updatedParticipants);
-
-      setParticipants(updatedParticipants);
-
-      if (event) {
-        console.log("Event exists, processing participants...");
-        console.log(
-          "About to enter for loop with participants:",
-          updatedParticipants
-        );
-        console.log(
-          "For loop condition check:",
-          updatedParticipants.length > 0
-        );
-
-        try {
-          // Save participants to Supabase
-          for (const participant of updatedParticipants) {
-            console.log("Processing participant:", participant);
-            console.log("Participant ID check:", !participant.id);
-            console.log("Participant ID value:", participant.id);
-
-            if (!participant.id) {
-              console.log("Adding new participant to database:", participant);
-              // New participant - add to database
-              const savedParticipant = await addParticipant(event.id, {
-                name: participant.name,
-                email: participant.email,
-              });
-              console.log("Saved participant:", savedParticipant);
-              participant.id = savedParticipant.id;
-            } else {
-              console.log("Participant already has ID:", participant.id);
-            }
-          }
-        } catch (error) {
-          console.error("Error saving participants:", error);
-          console.error("Error details:", {
-            message: error.message,
-            stack: error.stack,
-            name: error.name,
-          });
-        }
-      } else {
-        console.log("No event found, skipping database save");
-      }
-    } else {
-      // Handle direct array assignment (fallback)
-      console.log("newParticipants is an array, using directly");
+      // Update local state
       setParticipants(newParticipants);
+
+      // Update event in database
+      const updatedEvent = { ...event, participants: newParticipants };
+      setEvent(updatedEvent);
+
+      // Save to database
+      const { data, error } = await supabase
+        .from("events")
+        .update({ participants: newParticipants })
+        .eq("id", event.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error updating participants:", error);
+        throw error;
+      }
+
+      console.log("Participants updated successfully:", data);
+    } catch (error) {
+      console.error("Failed to update participants:", error);
+      alert("Failed to update participants: " + error.message);
     }
   };
 
   const handleAvailabilityChange = async (newAvailability) => {
-    console.log("handleAvailabilityChange called with:", newAvailability);
-    console.log("Type of newAvailability:", typeof newAvailability);
-    console.log("Is function:", typeof newAvailability === "function");
+    try {
+      console.log("handleAvailabilityChange called with:", newAvailability);
 
-    // Handle the function updater pattern from React setState
-    if (typeof newAvailability === "function") {
-      console.log(
-        "newAvailability is a function, calling it with current availability"
-      );
-      const updatedAvailability = newAvailability(availability);
-      console.log("Updated availability from function:", updatedAvailability);
-
-      setAvailability(updatedAvailability);
-
-      if (event && participants.length > 0) {
-        console.log("Saving availability to database...");
-        try {
-          // Save availability to Supabase
-          for (const [key, isAvailable] of Object.entries(
-            updatedAvailability
-          )) {
-            console.log(
-              "Processing availability key:",
-              key,
-              "value:",
-              isAvailable
-            );
-
-            // Fix the key parsing to handle dates with hyphens
-            // Key format: "participantId-date-timeSlot"
-            // Date format: "2025-08-13" (contains hyphens)
-            // TimeSlot format: "09:00"
-
-            const parts = key.split("-");
-            console.log("Split parts:", parts);
-
-            if (parts.length >= 4) {
-              const participantId = parts[0];
-              // Reconstruct the date from parts (year-month-day)
-              const date = `${parts[1]}-${parts[2]}-${parts[3]}`;
-              // Reconstruct the time slot from remaining parts
-              const timeSlot = parts.slice(4).join("-");
-
-              console.log("Parsed correctly:", {
-                participantId,
-                date,
-                timeSlot,
-              });
-
-              const participant = participants.find(
-                (p) => p.id == participantId
-              );
-              console.log("Found participant:", participant);
-
-              if (participant) {
-                console.log(
-                  "Saving availability for participant:",
-                  participant.name
-                );
-                await updateAvailability(
-                  event.id,
-                  participant.id,
-                  date,
-                  timeSlot,
-                  isAvailable
-                );
-                console.log("Successfully saved availability");
-              } else {
-                console.log("Participant not found for ID:", participantId);
-              }
-            } else {
-              console.error("Invalid key format:", key);
-            }
-          }
-        } catch (error) {
-          console.error("Error saving availability:", error);
-          console.error("Error details:", {
-            message: error.message,
-            stack: error.stack,
-            name: error.name,
-          });
-        }
-      } else {
-        console.log("Skipping availability save - no event or participants");
-      }
-    } else {
-      // Handle direct object assignment (fallback)
-      console.log("newAvailability is an object, using directly");
+      // Update local state
       setAvailability(newAvailability);
+
+      // Update event in database
+      const updatedEvent = { ...event, availabilityData: newAvailability };
+      setEvent(updatedEvent);
+
+      // Save to database using bulk update
+      await updateAvailabilityBulk(event.id, newAvailability);
+
+      console.log("Availability updated successfully");
+    } catch (error) {
+      console.error("Failed to update availability:", error);
+      alert("Failed to update availability: " + error.message);
     }
   };
 
   const handleScheduleComplete = async () => {
-    console.log("handleScheduleComplete called");
-    console.log("Current availability:", availability);
-    console.log("Current participants:", participants);
+    try {
+      console.log("Final save of availability:", availability);
 
-    // Ensure all availability is saved
-    if (
-      event &&
-      participants.length > 0 &&
-      Object.keys(availability).length > 0
-    ) {
-      console.log("Saving final availability data...");
-      try {
-        for (const [key, isAvailable] of Object.entries(availability)) {
-          // Fix the key parsing to handle dates with hyphens
-          const parts = key.split("-");
+      // Save final availability to database
+      await updateAvailabilityBulk(event.id, availability);
 
-          if (parts.length >= 4) {
-            const participantId = parts[0];
-            // Reconstruct the date from parts (year-month-day)
-            const date = `${parts[1]}-${parts[2]}-${parts[3]}`;
-            // Reconstruct the time slot from remaining parts
-            const timeSlot = parts.slice(4).join("-");
-
-            const participant = participants.find((p) => p.id == participantId);
-            if (participant) {
-              console.log(
-                "Final save for:",
-                participant.name,
-                key,
-                isAvailable
-              );
-              await updateAvailability(
-                event.id,
-                participant.id,
-                date,
-                timeSlot,
-                isAvailable
-              );
-            }
-          } else {
-            console.error("Invalid key format in final save:", key);
-          }
-        }
-        console.log("All availability saved successfully!");
-        alert("Scheduling completed successfully!");
-      } catch (error) {
-        console.error("Error in final availability save:", error);
-        alert("Error saving availability. Please try again.");
-      }
-    } else {
-      console.log("No availability to save");
-      alert("No availability data to save.");
+      console.log("Schedule completed successfully");
+      alert("Schedule saved successfully!");
+    } catch (error) {
+      console.error("Failed to save schedule:", error);
+      alert("Failed to save schedule: " + error.message);
     }
   };
 
-  if (loading) {
-    return (
-      <main className="app-main">
-        <div className="loading">
-          <p>Loading event...</p>
-        </div>
-      </main>
-    );
-  }
-
-  if (!event) {
-    return null;
-  }
+  if (loading) return <div className="loading">Loading event...</div>;
+  if (error) return <div className="error">Error: {error}</div>;
+  if (!event) return <div className="error">Event not found</div>;
 
   return (
-    <main className="app-main">
-      <div className="shared-event-view">
-        <div className="shared-event-header">
-          <h2>Shared Event</h2>
-          <p>This event was shared with you</p>
-        </div>
+    <div className="event-view">
+      <EventDetails event={event} />
 
-        <EventDetails event={event} />
+      <div className="participants-section">
+        <h2>Participants</h2>
         <ParticipantList
           participants={participants}
-          setParticipants={handleParticipantsChange}
+          onParticipantsChange={handleParticipantsChange}
+          eventId={event.id}
         />
+      </div>
+
+      <div className="availability-section">
+        <h2>Availability Grid</h2>
         <AvailabilityGrid
           event={event}
           participants={participants}
           availability={availability}
-          setAvailability={handleAvailabilityChange}
-          onComplete={handleScheduleComplete}
-          readOnly={false}
+          onAvailabilityChange={handleAvailabilityChange}
         />
+
+        <button
+          className="complete-scheduling-btn"
+          onClick={handleScheduleComplete}
+        >
+          Complete Scheduling
+        </button>
       </div>
-    </main>
+    </div>
   );
 }
 

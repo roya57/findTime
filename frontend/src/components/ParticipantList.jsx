@@ -1,119 +1,103 @@
-import { useState } from "react";
-import { Users, UserPlus, UserMinus, Mail } from "lucide-react";
+import React, { useState } from "react";
+import { Trash2 } from "lucide-react";
+import { addParticipant } from "../lib/db.js";
 
-const ParticipantList = ({ participants, setParticipants }) => {
-  const [newParticipant, setNewParticipant] = useState({
-    name: "",
-    email: "",
-  });
+function ParticipantList({ participants, onParticipantsChange, eventId }) {
+  const [newParticipant, setNewParticipant] = useState({ name: "", email: "" });
 
-  const handleAddParticipant = (e) => {
-    e.preventDefault();
-    if (newParticipant.name.trim()) {
-      const newParticipantData = {
-        name: newParticipant.name.trim(),
-        email: newParticipant.email.trim() || null,
-        availability: {},
-      };
-      console.log("Adding new participant:", newParticipantData);
-      setParticipants((prev) => {
-        const updatedParticipants = [...prev, newParticipantData];
-        console.log("Updated participants array:", updatedParticipants);
-        return updatedParticipants;
-      });
+  const handleAddParticipant = async () => {
+    if (!newParticipant.name.trim()) return;
+
+    try {
+      console.log("Adding new participant:", newParticipant);
+
+      // Add participant to database
+      const savedParticipant = await addParticipant(eventId, newParticipant);
+
+      // Update local state
+      const updatedParticipants = [...participants, savedParticipant];
+      onParticipantsChange(updatedParticipants);
+
+      // Clear form
       setNewParticipant({ name: "", email: "" });
+
+      console.log("Participant added successfully:", savedParticipant);
+    } catch (error) {
+      console.error("Failed to add participant:", error);
+      alert("Failed to add participant: " + error.message);
     }
   };
 
-  const handleRemoveParticipant = (id) => {
-    console.log("Removing participant with ID:", id);
-    setParticipants((prev) => {
-      const filteredParticipants = prev.filter((p) => p.id !== id);
-      console.log("Filtered participants:", filteredParticipants);
-      return filteredParticipants;
-    });
-  };
+  const handleRemoveParticipant = (participantId) => {
+    try {
+      console.log("Removing participant:", participantId);
 
-  const handleInputChange = (field, value) => {
-    setNewParticipant((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+      // Remove from local state
+      const updatedParticipants = participants.filter(
+        (p) => p.id !== participantId
+      );
+      onParticipantsChange(updatedParticipants);
+
+      console.log("Participant removed successfully");
+    } catch (error) {
+      console.error("Failed to remove participant:", error);
+      alert("Failed to remove participant: " + error.message);
+    }
   };
 
   return (
     <div className="participant-list">
-      <div className="participant-header">
-        <h3>
-          <Users size={20} />
-          Add Yourself to This Event
-        </h3>
-        <p className="participant-subtitle">
-          Enter your name and optionally your email to join this event
-        </p>
+      <div className="add-participant">
+        <h3>Join Event</h3>
+        <div className="input-group">
+          <input
+            type="text"
+            placeholder="Your Name"
+            value={newParticipant.name}
+            onChange={(e) =>
+              setNewParticipant({ ...newParticipant, name: e.target.value })
+            }
+          />
+          <input
+            type="email"
+            placeholder="Email (optional)"
+            value={newParticipant.email}
+            onChange={(e) =>
+              setNewParticipant({ ...newParticipant, email: e.target.value })
+            }
+          />
+          <button onClick={handleAddParticipant}>Join</button>
+        </div>
       </div>
 
-      <form onSubmit={handleAddParticipant} className="add-participant-form">
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="participantName">Your Name *</label>
-            <input
-              type="text"
-              id="participantName"
-              value={newParticipant.name}
-              onChange={(e) => handleInputChange("name", e.target.value)}
-              placeholder="Enter your name"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="participantEmail">
-              <Mail size={16} />
-              Your Email (optional)
-            </label>
-            <input
-              type="email"
-              id="participantEmail"
-              value={newParticipant.email}
-              onChange={(e) => handleInputChange("email", e.target.value)}
-              placeholder="Enter your email (optional)"
-            />
-          </div>
-
-          <button type="submit" className="add-button">
-            <UserPlus size={16} />
-            Join Event
-          </button>
-        </div>
-      </form>
-
       <div className="participants">
-        <h4>Current Participants ({participants.length})</h4>
+        <h3>Current Participants</h3>
         {participants.length === 0 ? (
-          <p className="no-participants">No participants have joined yet</p>
+          <p>No participants yet. Be the first to join!</p>
         ) : (
-          participants.map((participant, index) => (
-            <div key={participant.id || index} className="participant-item">
-              <div className="participant-info">
+          <ul>
+            {participants.map((participant) => (
+              <li key={participant.id} className="participant-item">
                 <span className="participant-name">{participant.name}</span>
                 {participant.email && (
-                  <span className="participant-email">{participant.email}</span>
+                  <span className="participant-email">
+                    ({participant.email})
+                  </span>
                 )}
-              </div>
-              <button
-                onClick={() => handleRemoveParticipant(participant.id || index)}
-                className="remove-button"
-                title="Remove participant"
-              >
-                <UserMinus size={16} />
-              </button>
-            </div>
-          ))
+                <button
+                  className="remove-btn"
+                  onClick={() => handleRemoveParticipant(participant.id)}
+                  title="Remove participant"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </div>
   );
-};
+}
 
 export default ParticipantList;
