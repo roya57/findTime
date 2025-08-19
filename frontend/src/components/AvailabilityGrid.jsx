@@ -312,45 +312,7 @@ function AvailabilityGrid({
     return count;
   };
 
-  const getBestTimes = () => {
-    if (!availability || !dates.length || !timeSlots.length) return [];
-
-    const timeSlotCounts = {};
-
-    dates.forEach((date) => {
-      // For weekly events, date is a string like "Monday"
-      // For specific dates, date is a Date object
-      let dateKey;
-
-      if (typeof date === "string") {
-        // Weekly event - use the day name directly
-        dateKey = date;
-      } else if (date instanceof Date) {
-        // Specific dates - format the Date object
-        dateKey = format(date, "yyyy-MM-dd");
-      } else {
-        console.error("Invalid date format in getBestTimes:", date);
-        return;
-      }
-
-      timeSlots.forEach((timeSlot) => {
-        const key = `${dateKey}-${timeSlot}`;
-        timeSlotCounts[key] = getAvailabilityCount(date, timeSlot);
-      });
-    });
-
-    // Sort by count (descending) and return top 3
-    return Object.entries(timeSlotCounts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 3)
-      .map(([key, count]) => {
-        const [date, time] = key.split("-");
-        return { date, time, count };
-      });
-  };
-
-  {
-    /*if (!event || !dates.length || !timeSlots.length) {
+  if (!event || !dates.length || !timeSlots.length) {
     console.log("Grid loading condition check:", {
       hasEvent: !!event,
       eventKeys: event ? Object.keys(event) : [],
@@ -359,7 +321,6 @@ function AvailabilityGrid({
       event: event,
     });
     return <div className="loading">Loading availability grid...</div>;
-  }*/
   }
 
   return (
@@ -385,23 +346,29 @@ function AvailabilityGrid({
         {timeSlots.map((timeSlot) => (
           <div key={timeSlot} className="time-row">
             <div className="time-slot">{timeSlot}</div>
+            {dates.map((date, dateIndex) => {
+              const formattedDate = format(date, "yyyy-MM-dd");
+              const availabilityCount = getAvailabilityCount(date, timeSlot);
+
+              return (
+                <div
+                  key={`${timeSlot}-${dateIndex}`}
+                  className={`availability-cell`}
+                  onClick={() => {
+                    console.log(`Clicked: ${timeSlot} on ${typeof date === 'string' ? date : format(date, 'yyyy-MM-dd')}`);
+                    console.log(`Current availability count: ${availabilityCount}`);
+                    // TODO: Add participant selection and availability marking
+                  }}
+                >
+                  <span className="availability-count">
+                    {availabilityCount}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
-
-      {/* <div className="grid-footer">
-        <div className="best-times">
-          <h4>Best Times:</h4>
-          <ul>
-            {getBestTimes().map((bestTime, index) => (
-              <li key={index}>
-                {format(new Date(bestTime.date), "MMM d")} at {bestTime.time}(
-                {bestTime.count} participants available)
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div> */}
     </div>
   );
 }
