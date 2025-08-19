@@ -12,8 +12,19 @@ function AvailabilityGrid({
 
   useEffect(() => {
     if (event) {
+      console.log("Event data received:", event);
+      console.log("Event dateType:", event.dateType);
+      console.log("Event startDate:", event.startDate);
+      console.log("Event endDate:", event.endDate);
+      console.log("Event selectedDays:", event.selectedDays);
+      console.log("Event startTime:", event.startTime);
+      console.log("Event endTime:", event.endTime);
+      console.log("Event duration:", event.duration);
+      
       generateDates();
       generateTimeSlots();
+    } else {
+      console.log("No event data received");
     }
   }, [event]);
 
@@ -23,6 +34,7 @@ function AvailabilityGrid({
     if (event.dateType === "specific") {
       // For specific dates, generate dates between start and end
       if (event.startDate && event.endDate) {
+        console.log("Generating specific dates from:", event.startDate, "to", event.endDate);
         const start = new Date(event.startDate);
         const end = new Date(event.endDate);
         let current = start;
@@ -31,10 +43,13 @@ function AvailabilityGrid({
           dateArray.push(new Date(current));
           current = addDays(current, 1);
         }
+      } else {
+        console.log("Missing startDate or endDate for specific dates");
       }
     } else if (event.dateType === "daysOfWeek") {
       // For days of week, show next occurrence of each selected day
       if (event.selectedDays && event.selectedDays.length > 0) {
+        console.log("Generating days of week for:", event.selectedDays);
         const today = new Date();
         const nextWeek = startOfWeek(today, { weekStartsOn: 1 }); // Monday start
 
@@ -46,6 +61,8 @@ function AvailabilityGrid({
           }
           dateArray.push(targetDay);
         });
+      } else {
+        console.log("No selectedDays for days of week");
       }
     }
 
@@ -54,8 +71,17 @@ function AvailabilityGrid({
   };
 
   const generateTimeSlots = () => {
-    if (!event.startTime || !event.endTime || !event.duration) return;
+    if (!event.startTime || !event.endTime || !event.duration) {
+      console.log("Missing time data:", { 
+        startTime: event.startTime, 
+        endTime: event.endTime, 
+        duration: event.duration 
+      });
+      return;
+    }
 
+    console.log("Generating time slots from:", event.startTime, "to", event.endTime, "with duration:", event.duration);
+    
     const slots = [];
     const start = new Date(`2000-01-01T${event.startTime}`);
     const end = new Date(`2000-01-01T${event.endTime}`);
@@ -67,6 +93,7 @@ function AvailabilityGrid({
       current = new Date(current.getTime() + durationMs);
     }
 
+    console.log("Generated timeSlots:", slots);
     setTimeSlots(slots);
   };
 
@@ -185,6 +212,13 @@ function AvailabilityGrid({
   };
 
   if (!event || !dates.length || !timeSlots.length) {
+    console.log("Grid loading condition check:", {
+      hasEvent: !!event,
+      eventKeys: event ? Object.keys(event) : [],
+      datesLength: dates.length,
+      timeSlotsLength: timeSlots.length,
+      event: event
+    });
     return <div className="loading">Loading availability grid...</div>;
   }
 
