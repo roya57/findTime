@@ -85,7 +85,7 @@ function AvailabilityGrid({
         console.log("startDate:", event.startDate);
         console.log("endDate:", event.endDate);
       }
-    } else if (event.dateType === "daysOfWeek") {
+    } else if (event.dateType === "daysOfWeek" || event.dateType === "weekly") {
       // For days of week, show next occurrence of each selected day
       if (event.selectedDays && event.selectedDays.length > 0) {
         console.log("Generating days of week for:", event.selectedDays);
