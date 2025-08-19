@@ -15,13 +15,13 @@ const EventCreator = ({ onSubmit }) => {
   });
 
   const daysOfWeek = [
-    { value: "monday", label: "Monday" },
-    { value: "tuesday", label: "Tuesday" },
-    { value: "wednesday", label: "Wednesday" },
-    { value: "thursday", label: "Thursday" },
-    { value: "friday", label: "Friday" },
-    { value: "saturday", label: "Saturday" },
-    { value: "sunday", label: "Sunday" },
+    { value: 0, label: "Monday" },
+    { value: 1, label: "Tuesday" },
+    { value: 2, label: "Wednesday" },
+    { value: 3, label: "Thursday" },
+    { value: 4, label: "Friday" },
+    { value: 5, label: "Saturday" },
+    { value: 6, label: "Sunday" },
   ];
 
   const handleSubmit = (e) => {
@@ -105,8 +105,8 @@ const EventCreator = ({ onSubmit }) => {
               <input
                 type="radio"
                 name="dateType"
-                value="weekly"
-                checked={dateType === "weekly"}
+                value="daysOfWeek"
+                checked={dateType === "daysOfWeek"}
                 onChange={(e) => setDateType(e.target.value)}
               />
               <span className="radio-label">Days of Week</span>
@@ -140,7 +140,7 @@ const EventCreator = ({ onSubmit }) => {
           </div>
         )}
 
-        {dateType === "weekly" && (
+        {dateType === "daysOfWeek" && (
           <div className="form-group">
             <label>Select Days of Week</label>
             <div className="days-selector">
@@ -215,7 +215,7 @@ const EventCreator = ({ onSubmit }) => {
           type="submit"
           className="create-button"
           disabled={
-            dateType === "weekly" && eventData.selectedDays.length === 0
+            dateType === "daysOfWeek" && eventData.selectedDays.length === 0
           }
         >
           <Plus size={20} />

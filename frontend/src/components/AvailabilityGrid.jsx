@@ -20,7 +20,7 @@ function AvailabilityGrid({
       console.log("Event startTime:", event.startTime);
       console.log("Event endTime:", event.endTime);
       console.log("Event duration:", event.duration);
-      
+
       generateDates();
       generateTimeSlots();
     } else {
@@ -31,20 +31,59 @@ function AvailabilityGrid({
   const generateDates = () => {
     let dateArray = [];
 
+    console.log("generateDates called with dateType:", event.dateType);
+    console.log(
+      "event.startDate:",
+      event.startDate,
+      "type:",
+      typeof event.startDate
+    );
+    console.log("event.endDate:", event.endDate, "type:", typeof event.endDate);
+    console.log(
+      "event.selectedDays:",
+      event.selectedDays,
+      "type:",
+      typeof event.selectedDays
+    );
+
     if (event.dateType === "specific") {
       // For specific dates, generate dates between start and end
       if (event.startDate && event.endDate) {
-        console.log("Generating specific dates from:", event.startDate, "to", event.endDate);
+        console.log(
+          "Generating specific dates from:",
+          event.startDate,
+          "to",
+          event.endDate
+        );
+
+        // Ensure dates are properly parsed
         const start = new Date(event.startDate);
         const end = new Date(event.endDate);
-        let current = start;
 
-        while (current <= end) {
-          dateArray.push(new Date(current));
-          current = addDays(current, 1);
+        console.log(
+          "Parsed start date:",
+          start,
+          "isValid:",
+          !isNaN(start.getTime())
+        );
+        console.log("Parsed end date:", end, "isValid:", !isNaN(end.getTime()));
+
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          let current = new Date(start);
+
+          while (current <= end) {
+            dateArray.push(new Date(current));
+            current = addDays(current, 1);
+          }
+        } else {
+          console.error(
+            "Invalid date format - start or end date is not a valid date"
+          );
         }
       } else {
         console.log("Missing startDate or endDate for specific dates");
+        console.log("startDate:", event.startDate);
+        console.log("endDate:", event.endDate);
       }
     } else if (event.dateType === "daysOfWeek") {
       // For days of week, show next occurrence of each selected day
@@ -63,25 +102,37 @@ function AvailabilityGrid({
         });
       } else {
         console.log("No selectedDays for days of week");
+        console.log("selectedDays value:", event.selectedDays);
       }
+    } else {
+      console.error("Unknown dateType:", event.dateType);
+      console.log("Available dateType values:", ["specific", "daysOfWeek"]);
     }
 
     console.log("Generated dateArray:", dateArray);
+    console.log("Final dates array length:", dateArray.length);
     setDates(dateArray);
   };
 
   const generateTimeSlots = () => {
     if (!event.startTime || !event.endTime || !event.duration) {
-      console.log("Missing time data:", { 
-        startTime: event.startTime, 
-        endTime: event.endTime, 
-        duration: event.duration 
+      console.log("Missing time data:", {
+        startTime: event.startTime,
+        endTime: event.endTime,
+        duration: event.duration,
       });
       return;
     }
 
-    console.log("Generating time slots from:", event.startTime, "to", event.endTime, "with duration:", event.duration);
-    
+    console.log(
+      "Generating time slots from:",
+      event.startTime,
+      "to",
+      event.endTime,
+      "with duration:",
+      event.duration
+    );
+
     const slots = [];
     const start = new Date(`2000-01-01T${event.startTime}`);
     const end = new Date(`2000-01-01T${event.endTime}`);
@@ -217,7 +268,7 @@ function AvailabilityGrid({
       eventKeys: event ? Object.keys(event) : [],
       datesLength: dates.length,
       timeSlotsLength: timeSlots.length,
-      event: event
+      event: event,
     });
     return <div className="loading">Loading availability grid...</div>;
   }
