@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Trash2 } from "lucide-react";
-import { addParticipant } from "../lib/db.js";
+import { addParticipant } from "../../lib/db.js";
 
 function ParticipantList({ participants, onParticipantsChange, eventId }) {
   const [newParticipant, setNewParticipant] = useState({ name: "", email: "" });

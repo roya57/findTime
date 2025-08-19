@@ -14,8 +14,8 @@ import {
   getEvent,
   addParticipant,
   updateAvailabilityBulk,
-} from "./lib/db.js";
-import { supabase } from "./lib/supabase.js";
+} from "../lib/db.js";
+import { supabase } from "../lib/supabase.js";
 import "./App.css";
 
 // Main App component with routing
