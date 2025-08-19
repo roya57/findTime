@@ -347,7 +347,8 @@ function AvailabilityGrid({
           <div key={timeSlot} className="time-row">
             <div className="time-slot">{timeSlot}</div>
             {dates.map((date, dateIndex) => {
-              console.log("date:", date);
+              const formattedDate = format(date, "yyyy-MM-dd");
+              console.log("formattedDate:", formattedDate);
               {
                 /*const formattedDate = format(date, "yyyy-MM-dd");
               const availabilityCount = getAvailabilityCount(date, timeSlot);
