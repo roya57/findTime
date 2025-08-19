@@ -23,6 +23,97 @@ body {
   flex-direction: column;
 }
 
+/* Create Event Page */
+.create-event-page {
+  min-height: 100vh;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.create-event-page h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* Event View Page */
+.event-view {
+  min-height: 100vh;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.participants-section {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  margin: 2rem 0;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.participants-section h2 {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+.availability-section {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  margin: 2rem 0;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.availability-section h2 {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+.complete-scheduling-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 2rem;
+  transition: transform 0.2s ease;
+}
+
+.complete-scheduling-btn:hover {
+  transform: translateY(-2px);
+}
+
+.loading {
+  text-align: center;
+  padding: 4rem;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.error {
+  text-align: center;
+  padding: 4rem;
+  font-size: 1.2rem;
+  color: #e74c3c;
+  background: white;
+  border-radius: 16px;
+  margin: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
 .app-header {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
@@ -358,91 +449,77 @@ body {
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
 }
 
-.participant-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.add-participant {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+}
+
+.add-participant h3 {
+  font-size: 1.5rem;
+  color: #333;
   margin-bottom: 1rem;
 }
 
-.participant-header h3 {
-  margin: 0;
-  color: #333;
-  font-size: 1.2rem;
+.input-group {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-.participant-subtitle {
-  margin: 0.5rem 0 1rem 0;
-  color: #666;
-  font-size: 0.9rem;
-  font-style: italic;
-}
-
-.participants h4 {
-  margin: 1.5rem 0 1rem 0;
-  color: #333;
+.input-group input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.75rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
   font-size: 1rem;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 0.5rem;
+  transition: border-color 0.2s ease;
 }
 
-.add-participant-form {
-  margin-bottom: 2rem;
+.input-group input:focus {
+  outline: none;
+  border-color: #667eea;
 }
 
-.add-button {
-  background: #667eea;
+.input-group button {
+  background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
-.add-button:hover {
-  background: #5a6fd8;
-  transform: translateY(-1px);
+.input-group button:hover {
+  transform: translateY(-2px);
 }
 
-.participants {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+.participants h3 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 1rem;
 }
 
-.no-participants {
-  color: #666;
-  font-style: italic;
-  text-align: center;
-  padding: 2rem;
+.participants ul {
+  list-style: none;
+  padding: 0;
 }
 
 .participant-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 1rem;
   background: #f8f9fa;
   border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.participant-item:hover {
-  background: #e9ecef;
-}
-
-.participant-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  margin-bottom: 0.5rem;
 }
 
 .participant-name {
@@ -452,22 +529,21 @@ body {
 
 .participant-email {
   color: #666;
-  font-size: 0.9rem;
+  margin-left: 0.5rem;
 }
 
-.remove-button {
-  background: #dc3545;
+.remove-btn {
+  background: #e74c3c;
   color: white;
   border: none;
   padding: 0.5rem;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
-.remove-button:hover {
-  background: #c82333;
-  transform: scale(1.05);
+.remove-btn:hover {
+  background: #c0392b;
 }
 
 /* Availability Grid */
