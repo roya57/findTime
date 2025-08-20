@@ -348,11 +348,6 @@ function AvailabilityGrid({
             <div className="time-slot">{timeSlot}</div>
             {dates.map((date, dateIndex) => {
               const availabilityCount = getAvailabilityCount(date, timeSlot);
-              console.log("availabilityCount:", availabilityCount);
-
-              {
-                /*const formattedDate = format(date, "yyyy-MM-dd");
-              const availabilityCount = getAvailabilityCount(date, timeSlot);
 
               return (
                 <div
@@ -376,8 +371,7 @@ function AvailabilityGrid({
                     {availabilityCount}
                   </span>
                 </div>
-              );*/
-              }
+              );
             })}
           </div>
         ))}
